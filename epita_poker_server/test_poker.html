@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Frontend Poker</title>
+    <style>
+        body { font-family: Arial; background: #2c3e50; color: white; padding: 20px; }
+        button { padding: 10px; font-size: 16px; margin: 5px; cursor: pointer; }
+        #logs { background: #1a252f; padding: 10px; margin-top: 20px; height: 200px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>Mon App de Poker 🃏</h1>
+    <button onclick="connecter()">1. S'asseoir à la Table</button>
+    <button onclick="envoyerMessage()">2. Envoyer une action au serveur Rust</button>
+
+    <div id="logs">En attente...<br></div>
+
+    <script>
+        let ws;
+        const logDiv = document.getElementById("logs");
+
+        function connecter() {
+            // On se connecte à ton serveur Rust !
+            ws = new WebSocket("ws://127.0.0.1:3000/ws/table1");
+
+            ws.onopen = () => {
+                logDiv.innerHTML += "✅ Connecté au serveur Rust !<br>";
+            };
+
+            // Quand le serveur Rust nous envoie un message
+            ws.onmessage = (event) => {
+                logDiv.innerHTML += "📥 Serveur dit : " + event.data + "<br>";
+            };
+        }
+
+        function envoyerMessage() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                // On envoie un faux message JSON au serveur
+                const message = JSON.stringify({ action: "Chat", payload: { message: "Coucou l'EPITA !" } });
+                ws.send(message);
+                logDiv.innerHTML += "📤 Moi : " + message + "<br>";
+            } else {
+                alert("Connecte-toi d'abord !");
+            }
+        }
+    </script>
+</body>
+</html>
