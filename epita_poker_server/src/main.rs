@@ -23,9 +23,11 @@ async fn main() {
 
     let addr = "127.0.0.1:3000";
     let listener = TcpListener::bind(addr).await.unwrap();
-    
+
     tracing::info!("Serveur de Poker Rust lancé sur {}", addr);
 
-    // Lancement du serveur asynchrone
+    // Lancement du serveur en bloquant le thread principal.
+    // L'exécution s'arrêtera ici et gérera les connexions asynchrones.
+    // Plus besoin de tokio::spawn ni de boucle sleep !
     axum::serve(listener, app).await.unwrap();
 }

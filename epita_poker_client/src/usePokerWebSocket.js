@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-export function usePokerWebSocket(url) {
+export function usePokerWebSocket(url, initialPseudo = "") {
   const [isConnected, setIsConnected] = useState(false);
-  const [myPseudo, setMyPseudo] = useState(""); // Notre identité !
+  const [myPseudo, setMyPseudo] = useState(initialPseudo);
+  const [mySeat, setMySeat] = useState(null);
   const [gameState, setGameState] = useState({
     phase: 'WaitingForPlayers',
     pot: 0,
@@ -17,7 +18,13 @@ export function usePokerWebSocket(url) {
   useEffect(() => {
     ws.current = new WebSocket(url);
 
-    ws.current.onopen = () => setIsConnected(true);
+    ws.current.onopen = () => {
+      setIsConnected(true);
+      // Envoyer le pseudo au serveur dès la connexion
+      if (initialPseudo) {
+        ws.current.send(JSON.stringify({ action: "JoinTable", payload: { pseudo: initialPseudo } }));
+      }
+    };
     ws.current.onclose = () => setIsConnected(false);
 
     ws.current.onmessage = (event) => {
@@ -28,13 +35,14 @@ export function usePokerWebSocket(url) {
         setGameState(message.data);
       } else if (message.type === "Welcome") {
         setMyPseudo(message.data.pseudo);
+        setMySeat(message.data.seat);
       } else if (message.type === "PlayerJoined") {
         setLogs(prev => [...prev, `${message.data.pseudo} a rejoint la table.`]);
       }
     };
 
     return () => ws.current?.close();
-  }, [url]);
+  }, [url, initialPseudo]);
 
   // Fonction pour envoyer une action au serveur Rust
   const sendAction = useCallback((action, payload = null) => {
@@ -46,5 +54,5 @@ export function usePokerWebSocket(url) {
   }, []);
 
   // L'export crucial de myPseudo est bien ici
-  return { isConnected, gameState, logs, sendAction, myPseudo };
+  return { isConnected, gameState, logs, sendAction, myPseudo, mySeat };
 }

@@ -1,51 +1,97 @@
 import { Routes, Route, useNavigate } from 'react-router-dom';
-import PokerTable from './Poker_Table'; // Ton ancien App.jsx deviendra ça
-import { Spade, Club } from 'lucide-react';
+import PokerTable from './Poker_Table';
+import PokerTableSelection from './PokerTableSelection';
+import PseudoSelection from './PseudoSelection';
+import { useEffect, useRef } from 'react';
 
-// LA PAGE D'ACCUEIL (Home)
 function Home() {
   const navigate = useNavigate();
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles = Array.from({ length: 60 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.2 + 0.3,
+      speed: Math.random() * 0.3 + 0.1,
+      opacity: Math.random() * 0.4 + 0.1,
+    }));
+
+    let raf;
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(180, 150, 80, ${p.opacity})`;
+        ctx.fill();
+        p.y -= p.speed;
+        if (p.y < -2) { p.y = canvas.height + 2; p.x = Math.random() * canvas.width; }
+      });
+      raf = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center p-8">
-      <h1 className="text-5xl font-bold mb-2">EPITA<span className="text-emerald-500 font-light">Casino</span></h1>
-      <p className="text-white/40 mb-12">Choisissez votre table</p>
+    <div className="home-root">
+      <canvas ref={canvasRef} className="home-canvas" />
 
-      <div className="flex gap-8 w-full max-w-4xl">
-        {/* Bouton Poker (Ton jeu) */}
-        <button 
-          onClick={() => navigate('/poker')}
-          className="flex-1 group relative p-1 rounded-3xl bg-gradient-to-b from-emerald-500/50 to-transparent hover:from-emerald-400 transition-all duration-500"
-        >
-          <div className="bg-slate-950/90 h-80 rounded-[22px] flex flex-col items-center justify-center border border-white/5 group-hover:bg-slate-900/90 transition-colors">
-            <Spade size={64} className="text-emerald-500 mb-6 group-hover:scale-110 transition-transform duration-500" />            <h2 className="text-3xl font-bold">Poker Texas Hold'em</h2>
-            <p className="text-white/40 mt-2">Rejoindre la table 1</p>
-          </div>
-        </button>
+      <div className="home-content">
+        <div className="home-header">
+          <div className="home-logo-line" />
+          <span className="home-logo-text">EPITA</span>
+          <div className="home-logo-line" />
+        </div>
 
-        {/* Bouton Blackjack (Celui de ton collègue) */}
-        <button 
-          onClick={() => navigate('/blackjack')}
-          className="flex-1 group relative p-1 rounded-3xl bg-gradient-to-b from-red-500/50 to-transparent hover:from-red-400 transition-all duration-500"
-        >
-          <div className="bg-slate-950/90 h-80 rounded-[22px] flex flex-col items-center justify-center border border-white/5 group-hover:bg-slate-900/90 transition-colors">
-            <Club size={64} className="text-red-500 mb-6 group-hover:scale-110 transition-transform duration-500" />
-            <h2 className="text-3xl font-bold">Blackjack 21</h2>
-            <p className="text-white/40 mt-2">Bientôt disponible</p>
-          </div>
-        </button>
+        <h1 className="home-title">Casino Royale</h1>
+        <p className="home-subtitle">Choisissez votre jeu</p>
+
+        <div className="home-cards">
+          {/* POKER */}
+          <button className="game-card poker-card" onClick={() => navigate('/poker')}>
+            <div className="card-suit">♠</div>
+            <div className="card-info">
+              <h2 className="card-name">Texas Hold'em</h2>
+              <p className="card-sub">Multiples tables disponibles</p>
+            </div>
+            <div className="card-arrow">→</div>
+            <div className="card-glow poker-glow" />
+          </button>
+
+          {/* BLACKJACK */}
+          <button className="game-card blackjack-card disabled-card" disabled>
+            <div className="card-suit red-suit">♣</div>
+            <div className="card-info">
+              <h2 className="card-name">Blackjack 21</h2>
+              <p className="card-sub">Bientôt disponible</p>
+            </div>
+            <div className="card-badge">Prochainement</div>
+            <div className="card-glow blackjack-glow" />
+          </button>
+        </div>
+
+        <p className="home-footer-text">Jouez de façon responsable · 18+</p>
       </div>
     </div>
   );
 }
 
-// LE GESTIONNAIRE DE ROUTES
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/poker" element={<PokerTable />} />
-      <Route path="/blackjack" element={<div className="text-white p-8 text-center text-2xl">Page Blackjack en construction par ton collègue...</div>} />
+      <Route path="/poker" element={<PokerTableSelection />} />
+      <Route path="/poker/table/:tableId/pseudo" element={<PseudoSelection />} />
+      <Route path="/poker/table/:tableId" element={<PokerTable />} />
+      <Route path="/blackjack" element={<div style={{color:'#fff',padding:'2rem',textAlign:'center',fontSize:'1.5rem'}}>Blackjack — En construction</div>} />
     </Routes>
   );
 }
