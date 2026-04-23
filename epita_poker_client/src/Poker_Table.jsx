@@ -117,7 +117,7 @@ export default function PokerTable() {
   const { tableId } = useParams();
   const pseudoFromState = location.state?.pseudo || '';
   
-  const wsUrl = `ws://127.0.0.1:3000/ws/${tableId || 'table1'}`;
+  const wsUrl = `ws://10.3.139.165/ws/${tableId || 'table1'}`;
   const { gameState, sendAction, myPseudo, mySeat } = usePokerWebSocket(wsUrl, pseudoFromState);
   const [raiseAmount, setRaiseAmount] = useState(100);
   const [showRankings, setShowRankings] = useState(false);
