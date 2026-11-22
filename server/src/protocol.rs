@@ -10,7 +10,6 @@ pub enum ClientMsg {
     Logout,
     AdminList,
     AdminGive { player_id: u32, amount: i64, reason: Option<String> },
-    AdminSetAdmin { player_id: u32, admin: bool },
     Lobby,
     Refill,
     Join { table: String },
@@ -136,7 +135,6 @@ pub struct BjView {
 pub enum ServerMsg {
     Welcome { name: String, balance: u64, player_id: u32, admin: bool, token: String },
     AuthError { msg: String, fatal: bool },
-    Role { admin: bool },
     LoggedOut,
     Notice { msg: String },
     AdminPlayers { players: Vec<AdminPlayerView>, log: Vec<LogEntry> },

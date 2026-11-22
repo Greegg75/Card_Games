@@ -13,6 +13,18 @@ use std::net::{SocketAddr, UdpSocket};
 use std::path::{Path, PathBuf};
 use tower_http::services::{ServeDir, ServeFile};
 
+fn newest(dir: &Path) -> Option<std::time::SystemTime> {
+    let mut best = None;
+    for entry in std::fs::read_dir(dir).ok()?.flatten() {
+        let path = entry.path();
+        let t = if path.is_dir() { newest(&path) } else { entry.metadata().ok().and_then(|m| m.modified().ok()) };
+        if t > best {
+            best = t;
+        }
+    }
+    best
+}
+
 fn lan_ip() -> Option<String> {
     let socket = UdpSocket::bind("0.0.0.0:0").ok()?;
     socket.connect("8.8.8.8:80").ok()?;
@@ -36,6 +48,14 @@ async fn main() {
             "Frontend introuvable dans {} — lancez `npm run build` dans client/ (ou utilisez `npm run dev`)",
             static_dir
         );
+    }
+    if let Some(src) = Path::new(&static_dir).parent().map(|p| p.join("src")) {
+        let built = std::fs::metadata(&index).and_then(|m| m.modified()).ok();
+        if let (Some(built), Some(changed)) = (built, newest(&src)) {
+            if changed > built {
+                tracing::warn!("Le site n'est pas à jour par rapport au code : lancez `npm run build` dans client/ puis relancez le serveur");
+            }
+        }
     }
     let files = ServeDir::new(&static_dir).not_found_service(ServeFile::new(index));
 
