@@ -1,8 +1,8 @@
 use crate::blackjack::{BjConfig, BlackjackTable};
 use crate::poker::{PokerConfig, PokerTable};
 use crate::protocol::{ServerMsg, TableSummary};
-use crate::wallet::Wallets;
-use std::collections::{HashMap, HashSet};
+use crate::accounts::Accounts;
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
@@ -27,22 +27,22 @@ pub struct TableHandle {
 }
 
 pub struct Hub {
-    pub wallets: Wallets,
+    pub wallets: Accounts,
     pub tables: RwLock<HashMap<String, TableHandle>>,
     pub order: RwLock<Vec<String>>,
     pub summaries: RwLock<HashMap<String, TableSummary>>,
-    pub online: Mutex<HashSet<String>>,
+    pub online: Mutex<HashMap<String, (Out, Arc<tokio::sync::Notify>)>>,
     next_cid: AtomicU64,
 }
 
 impl Hub {
-    pub fn new(data: PathBuf) -> Arc<Self> {
+    pub fn new(data_dir: PathBuf) -> Arc<Self> {
         Arc::new(Self {
-            wallets: Wallets::load(data),
+            wallets: Accounts::load(data_dir.join("accounts.json"), data_dir.join("wallets.json")),
             tables: RwLock::new(HashMap::new()),
             order: RwLock::new(Vec::new()),
             summaries: RwLock::new(HashMap::new()),
-            online: Mutex::new(HashSet::new()),
+            online: Mutex::new(HashMap::new()),
             next_cid: AtomicU64::new(1),
         })
     }
@@ -66,6 +66,18 @@ impl Hub {
             Some(h) => h.tx.send(cmd).is_ok(),
             None => false,
         }
+    }
+
+    pub fn notify(&self, name: &str, msgs: Vec<ServerMsg>) {
+        if let Some((out, _)) = self.online.lock().unwrap().get(&crate::accounts::key(name)) {
+            for m in msgs {
+                let _ = out.send(m);
+            }
+        }
+    }
+
+    pub fn is_online(&self, name: &str) -> bool {
+        self.online.lock().unwrap().contains_key(&crate::accounts::key(name))
     }
 
     pub fn game_of(&self, table: &str) -> Option<&'static str> {

@@ -1,9 +1,16 @@
+use crate::accounts::{LogEntry, PlayerInfo};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Debug)]
 #[serde(tag = "t", rename_all = "snake_case")]
 pub enum ClientMsg {
-    Hello { name: String },
+    Register { name: String, password: String },
+    Login { name: String, password: String },
+    Resume { token: String },
+    Logout,
+    AdminList,
+    AdminGive { player_id: u32, amount: i64, reason: Option<String> },
+    AdminSetAdmin { player_id: u32, admin: bool },
     Lobby,
     Refill,
     Join { table: String },
@@ -127,7 +134,12 @@ pub struct BjView {
 #[derive(Serialize, Clone, Debug)]
 #[serde(tag = "t", rename_all = "snake_case")]
 pub enum ServerMsg {
-    Welcome { name: String, balance: u64 },
+    Welcome { name: String, balance: u64, player_id: u32, admin: bool, token: String },
+    AuthError { msg: String, fatal: bool },
+    Role { admin: bool },
+    LoggedOut,
+    Notice { msg: String },
+    AdminPlayers { players: Vec<AdminPlayerView>, log: Vec<LogEntry> },
     Error { msg: String },
     Balance { balance: u64 },
     Lobby { tables: Vec<TableSummary> },
@@ -136,4 +148,11 @@ pub enum ServerMsg {
     Poker { state: Box<PokerView> },
     Blackjack { state: Box<BjView> },
     Chat { from: String, text: String },
+}
+
+#[derive(Serialize, Clone, Debug)]
+pub struct AdminPlayerView {
+    #[serde(flatten)]
+    pub info: PlayerInfo,
+    pub online: bool,
 }
