@@ -38,7 +38,11 @@ pub struct Hub {
 impl Hub {
     pub fn new(data_dir: PathBuf) -> Arc<Self> {
         Arc::new(Self {
-            wallets: Accounts::load(data_dir.join("accounts.json"), data_dir.join("wallets.json")),
+            wallets: Accounts::load(
+                data_dir.join("accounts.json"),
+                data_dir.join("wallets.json"),
+                PathBuf::from(std::env::var("ADMINS_FILE").unwrap_or_else(|_| "admins.txt".into())),
+            ),
             tables: RwLock::new(HashMap::new()),
             order: RwLock::new(Vec::new()),
             summaries: RwLock::new(HashMap::new()),

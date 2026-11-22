@@ -25,7 +25,7 @@ Site de cartes en temps réel avec jetons virtuels : plusieurs tables de Texas H
 **Comptes et administration**
 - Compte avec pseudo et mot de passe (chiffré avec Argon2), session conservée sur l'appareil
 - Chaque joueur reçoit un numéro à 6 chiffres, visible en haut du lobby (clic pour le copier)
-- Le premier compte créé sur le serveur devient administrateur ; un admin peut nommer d'autres admins
+- Les administrateurs sont les pseudos listés dans `server/admins.txt` (un par ligne)
 - Panneau « Administration » : donner ou retirer des jetons à un joueur via son numéro, avec un motif, liste des joueurs et historique des opérations
 - Le joueur concerné est prévenu en direct
 - Les comptes sont sauvegardés dans `server/data/accounts.json`
@@ -108,6 +108,7 @@ Ouvrez http://localhost:5173. Vite redirige `/ws` vers le serveur Rust sur le po
 | `PORT` | `3000` | Port d'écoute |
 | `STATIC_DIR` | `../client/dist` | Dossier du frontend compilé |
 | `DATA_DIR` | `data` | Dossier des données (comptes, soldes, historique admin) |
+| `ADMINS_FILE` | `admins.txt` | Fichier listant les pseudos administrateurs |
 | `TIMING_SCALE` | `1` | Multiplie les délais de jeu (ex. `0.2` pour des tests rapides) |
 
 ## Structure
@@ -133,7 +134,7 @@ client/src
 ## Administration : cas particuliers
 
 - **Anciens soldes** : au premier démarrage, les pseudos de l'ancien fichier `data/wallets.json` sont repris avec leur solde. Leur propriétaire récupère son compte en utilisant « Créer un compte » avec le même pseudo.
-- **Retrouver l'accès admin** : arrêtez le serveur, ouvrez `server/data/accounts.json`, passez `"admin": true` sur le compte voulu, puis relancez.
+- **Choisir les administrateurs** : modifiez `server/admins.txt`, un pseudo par ligne, en respectant les accents (`Grégoire` et `Gregoire` sont deux pseudos différents ; majuscules et minuscules sont indifférentes). Les lignes vides et celles qui commencent par `#` sont ignorées. Le changement est pris en compte sans redémarrer le serveur ; la personne concernée doit simplement se déconnecter puis se reconnecter pour voir apparaître ou disparaître le bouton « Administration ».
 - **Mot de passe oublié** : supprimez le champ `"hash"` du compte dans `accounts.json` (serveur arrêté). Le joueur pourra redéfinir son mot de passe via « Créer un compte » en gardant son solde et son numéro.
 
 ## Tests

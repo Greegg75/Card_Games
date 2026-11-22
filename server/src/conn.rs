@@ -209,21 +209,6 @@ async fn handle(socket: WebSocket, hub: Arc<Hub>) {
                     Err(e) => err(&e),
                 }
             }
-            ClientMsg::AdminSetAdmin { player_id, admin } => match hub.wallets.set_admin(&me, player_id, admin) {
-                Ok(target) => {
-                    let note = if admin {
-                        format!("{} vous a nommé administrateur", me)
-                    } else {
-                        format!("{} vous a retiré le rôle d'administrateur", me)
-                    };
-                    hub.notify(&target, vec![ServerMsg::Role { admin }, ServerMsg::Notice { msg: note }]);
-                    let _ = tx.send(ServerMsg::Notice {
-                        msg: if admin { format!("{} est maintenant administrateur", target) } else { format!("{} n'est plus administrateur", target) },
-                    });
-                    let _ = tx.send(admin_players(&hub));
-                }
-                Err(e) => err(&e),
-            },
             ClientMsg::Join { table: id } => {
                 if let Some(old) = table.take() {
                     hub.send(&old, TableCmd::Leave { cid });
