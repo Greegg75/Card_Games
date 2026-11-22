@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { send, useStore } from '../net.js'
+import { logout, send, toast, useStore } from '../net.js'
 import { fmt, theme } from '../format.js'
 import Card from '../components/Card.jsx'
 import { ChipStack } from '../components/Chips.jsx'
 import { MiniTable } from '../components/PokerFelt.jsx'
 import HandRankings from '../components/HandRankings.jsx'
+import AdminPanel from '../components/AdminPanel.jsx'
 import { Balance, Modal } from '../components/Common.jsx'
 
 const HERO_HAND = ['As', 'Kh', 'Qd', 'Jc', 'Ts']
@@ -37,9 +38,20 @@ function TableRow({ t }) {
 
 export default function Lobby() {
   const me = useStore(s => s.me)
+  const playerId = useStore(s => s.playerId)
+  const admin = useStore(s => s.admin)
   const tables = useStore(s => s.lobby)
   const [tab, setTab] = useState('poker')
   const [rankings, setRankings] = useState(false)
+  const [adminOpen, setAdminOpen] = useState(false)
+  const copyId = async () => {
+    try {
+      await navigator.clipboard.writeText(String(playerId))
+      toast('Numéro copié', 'info')
+    } catch {
+      toast(`Votre numéro : ${playerId}`, 'info')
+    }
+  }
   useEffect(() => {
     send({ t: 'lobby' })
     const iv = setInterval(() => send({ t: 'lobby' }), 3000)
@@ -55,8 +67,13 @@ export default function Lobby() {
           <span>Aurum Club</span>
         </div>
         <div className="lobby-top-right">
-          <span className="lobby-me">{me}</span>
+          {admin && <button className="btn btn-ghost" onClick={() => setAdminOpen(true)}>Administration</button>}
+          <button className="player-id" onClick={copyId} title="Copier mon numéro de joueur">
+            <span className="lobby-me">{me}</span>
+            <span className="player-id-num">n° {playerId}</span>
+          </button>
           <Balance />
+          <button className="btn btn-ghost btn-sm" onClick={logout}>Déconnexion</button>
         </div>
       </header>
 
@@ -103,11 +120,15 @@ export default function Lobby() {
         <motion.ul key={tab} className="lobby-list" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           {list.map(t => <TableRow key={t.id} t={t} />)}
         </motion.ul>
-        <p className="lobby-foot">Jetons virtuels sans valeur réelle. Votre solde est conservé par le serveur sous votre pseudo, et peut être rechargé sous 2 000 jetons.</p>
+        <p className="lobby-foot">Jetons virtuels sans valeur réelle. Votre solde est conservé sur votre compte et peut être rechargé sous 2 000 jetons. Cliquez sur votre numéro de joueur pour le copier et le transmettre à un administrateur.</p>
       </section>
 
       <Modal open={rankings} onClose={() => setRankings(false)} className="modal-wide">
         <HandRankings onClose={() => setRankings(false)} />
+      </Modal>
+
+      <Modal open={adminOpen && admin} onClose={() => setAdminOpen(false)} className="modal-wide">
+        <AdminPanel onClose={() => setAdminOpen(false)} />
       </Modal>
     </div>
   )
