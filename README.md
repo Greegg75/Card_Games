@@ -121,13 +121,13 @@ server/src
   blackjack.rs   moteur blackjack (une tâche par table)
   eval.rs        évaluateur de mains + tests
   cards.rs       cartes et paquets
-  wallet.rs      soldes persistants
+  accounts.rs    comptes, mots de passe, soldes, actions admin + tests
   protocol.rs    messages client/serveur (JSON)
 
 client/src
   net.js                 connexion et état global
   screens/               Login, Lobby, PokerScreen, BlackjackScreen
-  components/            Card, Chips, PokerFelt, BlackjackFelt, HandRankings, Common
+  components/            Card, Chips, PokerFelt, BlackjackFelt, HandRankings, AdminPanel, Common
 ```
 
 ## Administration : cas particuliers
