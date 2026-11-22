@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { logout, send, toast, useStore } from '../net.js'
-import { fmt, theme } from '../format.js'
+import { fmt, range, theme } from '../format.js'
 import Card from '../components/Card.jsx'
 import { ChipStack } from '../components/Chips.jsx'
 import { MiniTable } from '../components/PokerFelt.jsx'
@@ -20,8 +20,8 @@ function TableRow({ t }) {
         <h3>{t.name}</h3>
         <p>
           {t.game === 'poker'
-            ? `Blindes ${t.stakes}, cave de ${fmt(t.min_buy)} à ${fmt(t.max_buy)}`
-            : `Mise de ${fmt(t.min_bet)} à ${fmt(t.max_bet)}`}
+            ? `Blindes ${fmt(t.small_blind)}/${fmt(t.big_blind)}, cave ${range(t.min_buy, t.max_buy)}`
+            : `Mise ${range(t.min_bet, t.max_bet)}`}
         </p>
       </div>
       <div className="lobby-row-meta">

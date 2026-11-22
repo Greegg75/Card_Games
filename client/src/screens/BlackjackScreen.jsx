@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { send, useStore } from '../net.js'
-import { fmt } from '../format.js'
+import { fmt, range } from '../format.js'
 import Card from '../components/Card.jsx'
 import { Chip, ChipStack, DENOMS } from '../components/Chips.jsx'
 import BlackjackFelt, { spotXY, towardCenter } from '../components/BlackjackFelt.jsx'
@@ -109,7 +109,7 @@ function BetBar({ v, remaining }) {
       <div className="bj-bar-info">
         <strong>{me.bet > 0 ? `Votre mise : ${fmt(me.bet)}` : 'Placez votre mise'}</strong>
         <span>
-          {v.phase === 'betting' && remaining != null ? `Distribution dans ${Math.ceil(remaining / 1000)} s` : `Mise de ${fmt(v.table.min_bet)} à ${fmt(v.table.max_bet)}`}
+          {v.phase === 'betting' && remaining != null ? `Distribution dans ${Math.ceil(remaining / 1000)} s` : `Mise ${range(v.table.min_bet, v.table.max_bet)}`}
         </span>
       </div>
       <div className="bj-chips">
@@ -188,7 +188,7 @@ export default function BlackjackScreen() {
         <button className="btn btn-ghost" onClick={leaveTable}>Quitter la table</button>
         <div className="table-title">
           <h1>{v.table.name}</h1>
-          <span>Blackjack, mise de {fmt(v.table.min_bet)} à {fmt(v.table.max_bet)}{v.round_no ? `, donne n°${v.round_no}` : ''}</span>
+          <span>Blackjack, mise {range(v.table.min_bet, v.table.max_bet)}{v.round_no ? `, donne n°${v.round_no}` : ''}</span>
         </div>
         <div className="table-top-right">
           <button className={`btn btn-ghost ${rules ? 'is-on' : ''}`} onClick={() => setRules(r => !r)}>Règles</button>
