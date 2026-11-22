@@ -233,7 +233,7 @@ export default function PokerScreen() {
         <button className="btn btn-ghost" onClick={leaveTable}>Quitter la table</button>
         <div className="table-title">
           <h1>{v.table.name}</h1>
-          <span>Texas Hold'em No Limit, blindes {v.table.stakes}{v.hand_no ? `, main n°${v.hand_no}` : ''}</span>
+          <span>Texas Hold'em No Limit, blindes {fmt(v.table.small_blind)}/{fmt(v.table.big_blind)}{v.hand_no ? `, main n°${v.hand_no}` : ''}</span>
         </div>
         <div className="table-top-right">
           <button className={`btn btn-ghost ${rankings ? 'is-on' : ''}`} onClick={() => setRankings(r => !r)}>Classement des mains</button>
@@ -243,7 +243,7 @@ export default function PokerScreen() {
       </header>
 
       <Stage>
-        <PokerFelt theme={v.table.theme} title={`Blindes ${v.table.stakes}`} />
+        <PokerFelt theme={v.table.theme} title={`Blindes ${fmt(v.table.small_blind)}/${fmt(v.table.big_blind)}`} />
 
         <div className="board">
           <AnimatePresence>
