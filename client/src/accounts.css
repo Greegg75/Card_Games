@@ -80,6 +80,7 @@
 .admin-id { font-size: 13px; color: var(--muted); font-weight: 700; }
 .admin-balance { font-weight: 800; color: var(--brass-hi); min-width: 80px; text-align: right; }
 .admin-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.admin code { font-size: 12.5px; padding: 1px 6px; border-radius: 5px; background: rgba(0, 0, 0, 0.35); color: var(--brass-hi); }
 .admin-log-title { margin-bottom: 8px !important; }
 .admin-log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
 .admin-log li { display: grid; grid-template-columns: 90px 1fr auto; gap: 10px; align-items: baseline; }

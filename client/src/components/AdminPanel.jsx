@@ -14,7 +14,6 @@ function ago(at) {
 
 export default function AdminPanel({ onClose }) {
   const data = useStore(s => s.adminData)
-  const myId = useStore(s => s.playerId)
   const [number, setNumber] = useState('')
   const [amount, setAmount] = useState('')
   const [reason, setReason] = useState('')
@@ -46,7 +45,7 @@ export default function AdminPanel({ onClose }) {
         <h2>Administration</h2>
         <button className="btn btn-ghost btn-xs" onClick={onClose}>Fermer</button>
       </div>
-      <p className="rankings-sub">Donnez ou retirez des jetons à un joueur grâce à son numéro, visible en haut de son lobby.</p>
+      <p className="rankings-sub">Donnez ou retirez des jetons à un joueur grâce à son numéro, visible en haut de son lobby. La liste des administrateurs se modifie dans le fichier <code>server/admins.txt</code>.</p>
 
       <form className="admin-give" onSubmit={e => { e.preventDefault(); submit(1) }}>
         <div className="admin-fields">
@@ -106,11 +105,6 @@ export default function AdminPanel({ onClose }) {
             <span className="admin-balance">{fmt(p.balance)}</span>
             <span className="admin-actions">
               <button className="btn btn-ghost btn-xs" onClick={() => setNumber(String(p.id))}>Choisir</button>
-              {p.id !== myId && p.claimed && (
-                <button className="btn btn-ghost btn-xs" onClick={() => send({ t: 'admin_set_admin', player_id: p.id, admin: !p.admin })}>
-                  {p.admin ? 'Retirer admin' : 'Nommer admin'}
-                </button>
-              )}
             </span>
           </li>
         ))}
