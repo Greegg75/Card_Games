@@ -8,7 +8,7 @@ Site de cartes en temps réel avec jetons virtuels : plusieurs tables de Texas H
 ## Fonctionnalités
 
 **Poker (Texas Hold'em No Limit)**
-- 5 tables (6 ou 9 places), blindes de 5/10 à 200/400
+- 7 tables (6 ou 9 places), des blindes 5/10 (cave 200 à 1 000) jusqu'à 5 000/10 000 (cave à partir de 200 000, sans plafond)
 - Bouton, petite et grosse blinde, relance minimum, tapis, pots annexes, partage des pots
 - Abattage avec évaluation de la meilleure main sur 7 cartes et mise en valeur des cartes gagnantes
 - Minuteur de 25 s par action (parole ou couché automatique), retrait après 3 inactivités
@@ -17,7 +17,7 @@ Site de cartes en temps réel avec jetons virtuels : plusieurs tables de Texas H
 - Raccourcis clavier : `F` se coucher, `C` parole/suivre, `R` relancer
 
 **Blackjack**
-- 3 tables de 5 places, sabot de 6 jeux
+- 6 tables de 5 places, des mises de 10 à 500 jusqu'à 250 000 sans plafond, sabot de 6 jeux
 - Tirer, rester, doubler, séparer (jusqu'à 4 mains)
 - Blackjack payé 3 pour 2, la banque reste à 17
 - Raccourcis : `H` tirer, `S` rester, `D` doubler, `P` séparer
