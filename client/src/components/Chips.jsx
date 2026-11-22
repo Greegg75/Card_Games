@@ -1,6 +1,9 @@
 import { fmt } from '../format.js'
 
 export const DENOMS = [
+  { v: 1000000, base: '#f1ece0', edge: '#b8933f', ink: '#5a3f0c' },
+  { v: 500000, base: '#b8336a', edge: '#fde8f1', ink: '#fff' },
+  { v: 100000, base: '#0f7c8c', edge: '#e3fbff', ink: '#fff' },
   { v: 25000, base: '#1d5e8c', edge: '#e9f1f7', ink: '#fff' },
   { v: 5000, base: '#c7582f', edge: '#fff1e6', ink: '#fff' },
   { v: 1000, base: '#c9a55c', edge: '#3a2a10', ink: '#2a1d08' },
@@ -14,6 +17,7 @@ export const DENOMS = [
 export const denom = v => DENOMS.find(d => d.v === v) || DENOMS[DENOMS.length - 1]
 
 function short(v) {
+  if (v >= 1000000) return `${v / 1000000}M`
   if (v >= 1000) return `${v / 1000}k`
   return String(v)
 }

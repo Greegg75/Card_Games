@@ -10,6 +10,8 @@ use tokio::sync::mpsc;
 
 pub type Out = mpsc::UnboundedSender<ServerMsg>;
 
+pub const UNLIMITED: u64 = u64::MAX;
+
 #[derive(Debug)]
 pub enum TableCmd {
     Join { cid: u64, name: String, out: Out },
@@ -95,21 +97,23 @@ impl Hub {
 
     pub fn spawn_tables(self: &Arc<Self>) {
         let poker = [
-            ("poker-1", "Monaco", "emerald", 5, 10, 6),
-            ("poker-2", "Saint-Tropez", "royal", 10, 20, 9),
-            ("poker-3", "Macao", "crimson", 25, 50, 6),
-            ("poker-4", "Deauville", "teal", 50, 100, 9),
-            ("poker-5", "Cercle Noir", "onyx", 200, 400, 6),
+            ("poker-1", "Clichy Montmartre", "emerald", 5, 10, 6, 200, 1_000),
+            ("poker-2", "Club Barrière", "royal", 10, 20, 9, 400, 2_000),
+            ("poker-3", "Deauville", "crimson", 25, 50, 6, 1_000, 5_000),
+            ("poker-4", "Aviation Club", "teal", 50, 100, 9, 2_000, 10_000),
+            ("poker-5", "Monte-Carlo", "onyx", 200, 400, 6, 8_000, 40_000),
+            ("poker-6", "Aria Las Vegas", "velvet", 1_000, 2_000, 6, 40_000, 200_000),
+            ("poker-7", "Bobby's Room", "onyx", 5_000, 10_000, 6, 200_000, UNLIMITED),
         ];
-        for (id, name, theme, sb, bb, seats) in poker {
+        for (id, name, theme, sb, bb, seats, min_buy, max_buy) in poker {
             let cfg = PokerConfig {
                 id: id.to_string(),
                 name: name.to_string(),
                 theme,
                 sb,
                 bb,
-                min_buy: bb * 20,
-                max_buy: bb * 100,
+                min_buy,
+                max_buy,
                 seats,
             };
             let (tx, rx) = mpsc::unbounded_channel();
@@ -119,9 +123,12 @@ impl Hub {
             tokio::spawn(table.run(rx));
         }
         let bj = [
-            ("blackjack-1", "Riviera", "crimson", 10, 500),
-            ("blackjack-2", "Bellagio", "royal", 50, 2_500),
-            ("blackjack-3", "Salon Privé", "onyx", 250, 10_000),
+            ("blackjack-1", "Enghien-les-Bains", "crimson", 10, 500),
+            ("blackjack-2", "Cannes Croisette", "royal", 50, 2_500),
+            ("blackjack-3", "Baden-Baden", "emerald", 250, 10_000),
+            ("blackjack-4", "Caesars Palace", "teal", 10_000, 50_000),
+            ("blackjack-5", "Wynn Las Vegas", "velvet", 50_000, 250_000),
+            ("blackjack-6", "Venetian Macao", "onyx", 250_000, UNLIMITED),
         ];
         for (id, name, theme, min_bet, max_bet) in bj {
             let cfg = BjConfig {
