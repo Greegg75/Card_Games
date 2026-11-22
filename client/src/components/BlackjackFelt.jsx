@@ -16,7 +16,7 @@ export function towardCenter(p, dist) {
 }
 
 function Rack() {
-  const cols = [DENOMS[7], DENOMS[6], DENOMS[5], DENOMS[4], DENOMS[3], DENOMS[2], DENOMS[1], DENOMS[0]]
+  const cols = DENOMS.slice(-8).reverse()
   return (
     <g>
       <rect x="590" y="20" width="420" height="78" rx="10" fill="#120b06" stroke="url(#brass)" strokeWidth="3" />
