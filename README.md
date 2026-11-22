@@ -22,8 +22,16 @@ Site de cartes en temps réel avec jetons virtuels : plusieurs tables de Texas H
 - Blackjack payé 3 pour 2, la banque reste à 17
 - Raccourcis : `H` tirer, `S` rester, `D` doubler, `P` séparer
 
+**Comptes et administration**
+- Compte avec pseudo et mot de passe (chiffré avec Argon2), session conservée sur l'appareil
+- Chaque joueur reçoit un numéro à 6 chiffres, visible en haut du lobby (clic pour le copier)
+- Le premier compte créé sur le serveur devient administrateur ; un admin peut nommer d'autres admins
+- Panneau « Administration » : donner ou retirer des jetons à un joueur via son numéro, avec un motif, liste des joueurs et historique des opérations
+- Le joueur concerné est prévenu en direct
+- Les comptes sont sauvegardés dans `server/data/accounts.json`
+
 **Commun**
-- 20 000 jetons à la création d'un pseudo, solde sauvegardé dans `server/data/wallets.json`
+- 20 000 jetons à la création d'un compte
 - Recharge possible sous 2 000 jetons
 - Spectateurs, discussion et historique par table, reconnexion automatique
 
@@ -31,8 +39,20 @@ Site de cartes en temps réel avec jetons virtuels : plusieurs tables de Texas H
 
 - **Rust** : https://rustup.rs (`curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`)
 - **Node.js 18 ou plus** : https://nodejs.org (ou `brew install node`)
+- Sous Windows, acceptez l'installation des « Visual Studio C++ Build Tools » proposée par rustup, et autorisez le serveur dans le pare-feu pour les réseaux privés au premier lancement.
 
-## Lancer le projet (mode partie entre amis)
+## Lancement rapide (double-clic)
+
+Une seule personne lance le serveur : l'hôte. Les autres joueurs n'installent rien, ils ouvrent juste le lien envoyé par l'hôte dans leur navigateur.
+
+- **Mac** : double-cliquez sur `lancer.command`
+- **Windows** : double-cliquez sur `lancer.bat`
+
+Le script prépare le site, démarre le serveur et ouvre le navigateur automatiquement. La première fois, la compilation prend 1 à 2 minutes. Laissez la fenêtre ouverte pendant la partie et fermez-la pour arrêter le serveur.
+
+Sur Mac, si le double-clic affiche « permission refusée », lancez une seule fois `chmod +x lancer.command` dans un terminal à la racine du projet. Si macOS bloque le fichier, faites clic droit → Ouvrir.
+
+## Lancer le projet à la main (mode partie entre amis)
 
 ```bash
 cd client
@@ -61,7 +81,7 @@ Pour tester seul à plusieurs joueurs : ouvrez une fenêtre normale et une fenê
 Avec un tunnel Cloudflare, sans configurer votre box :
 
 ```bash
-brew install cloudflared
+brew install cloudflared          # Windows : winget install Cloudflare.cloudflared
 cloudflared tunnel --url http://localhost:3000
 ```
 
@@ -87,7 +107,7 @@ Ouvrez http://localhost:5173. Vite redirige `/ws` vers le serveur Rust sur le po
 | --- | --- | --- |
 | `PORT` | `3000` | Port d'écoute |
 | `STATIC_DIR` | `../client/dist` | Dossier du frontend compilé |
-| `DATA_FILE` | `data/wallets.json` | Fichier des soldes |
+| `DATA_DIR` | `data` | Dossier des données (comptes, soldes, historique admin) |
 | `TIMING_SCALE` | `1` | Multiplie les délais de jeu (ex. `0.2` pour des tests rapides) |
 
 ## Structure
@@ -101,14 +121,20 @@ server/src
   blackjack.rs   moteur blackjack (une tâche par table)
   eval.rs        évaluateur de mains + tests
   cards.rs       cartes et paquets
-  wallet.rs      soldes persistants
+  accounts.rs    comptes, mots de passe, soldes, actions admin + tests
   protocol.rs    messages client/serveur (JSON)
 
 client/src
   net.js                 connexion et état global
   screens/               Login, Lobby, PokerScreen, BlackjackScreen
-  components/            Card, Chips, PokerFelt, BlackjackFelt, HandRankings, Common
+  components/            Card, Chips, PokerFelt, BlackjackFelt, HandRankings, AdminPanel, Common
 ```
+
+## Administration : cas particuliers
+
+- **Anciens soldes** : au premier démarrage, les pseudos de l'ancien fichier `data/wallets.json` sont repris avec leur solde. Leur propriétaire récupère son compte en utilisant « Créer un compte » avec le même pseudo.
+- **Retrouver l'accès admin** : arrêtez le serveur, ouvrez `server/data/accounts.json`, passez `"admin": true` sur le compte voulu, puis relancez.
+- **Mot de passe oublié** : supprimez le champ `"hash"` du compte dans `accounts.json` (serveur arrêté). Le joueur pourra redéfinir son mot de passe via « Créer un compte » en gardant son solde et son numéro.
 
 ## Tests
 

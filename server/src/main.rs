@@ -1,3 +1,4 @@
+mod accounts;
 mod blackjack;
 mod cards;
 mod conn;
@@ -5,7 +6,6 @@ mod eval;
 mod hub;
 mod poker;
 mod protocol;
-mod wallet;
 
 use axum::routing::get;
 use axum::Router;
@@ -25,9 +25,9 @@ async fn main() {
 
     let port: u16 = std::env::var("PORT").ok().and_then(|p| p.parse().ok()).unwrap_or(3000);
     let static_dir = std::env::var("STATIC_DIR").unwrap_or_else(|_| "../client/dist".into());
-    let data_file = std::env::var("DATA_FILE").unwrap_or_else(|_| "data/wallets.json".into());
+    let data_dir = std::env::var("DATA_DIR").unwrap_or_else(|_| "data".into());
 
-    let hub = hub::Hub::new(PathBuf::from(data_file));
+    let hub = hub::Hub::new(PathBuf::from(data_dir));
     hub.spawn_tables();
 
     let index = Path::new(&static_dir).join("index.html");
