@@ -1,0 +1,97 @@
+.lobby-me { color: var(--ivory); }
+.player-id {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+  padding: 2px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: none;
+  cursor: pointer;
+  line-height: 1.2;
+}
+.player-id:hover { border-color: var(--line); background: rgba(0, 0, 0, 0.25); }
+.player-id-num { font-size: 12px; font-weight: 700; color: var(--brass-hi); letter-spacing: 0.5px; }
+.btn-danger { color: #f0a9a0; border-color: rgba(163, 48, 61, 0.6); }
+.btn-danger:hover:not(:disabled) { background: rgba(163, 48, 61, 0.2); border-color: #a3303d; }
+.muted { color: var(--muted); font-size: 14px; }
+.field-error { color: #f0a9a0; font-size: 13px; text-align: left; margin: -10px 0 12px; }
+.input-error { border-color: #a3303d !important; }
+.login-tabs { align-self: stretch; margin-bottom: 18px; }
+.login-tabs button { flex: 1; }
+
+.admin h3 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 22px; }
+.admin-give {
+  padding: 18px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--line-soft);
+  margin-bottom: 22px;
+}
+.admin-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.admin label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; }
+.admin input {
+  height: 42px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--ivory);
+  padding: 0 12px;
+  font: 600 15px var(--ui);
+}
+.admin-target { min-height: 22px; margin: 12px 0 10px; font-size: 14px; }
+.admin-target b { color: var(--brass-hi); }
+.admin-target .field-error { margin: 0; }
+.admin-quick { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.admin-quick button {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+.admin-quick button:hover { border-color: var(--brass); color: var(--brass-hi); }
+.admin-reason { margin-top: 4px; }
+.admin-give .modal-actions { margin-top: 16px; }
+.admin-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.admin .admin-search { height: 36px; width: min(260px, 50%); font-size: 13px; }
+.admin-players { list-style: none; margin: 0 0 22px; padding: 0; max-height: 300px; overflow-y: auto; border-top: 1px solid var(--line-soft); }
+.admin-players li {
+  display: grid;
+  grid-template-columns: 34px 1fr auto auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.admin-players li.is-selected { background: rgba(201, 165, 92, 0.1); }
+.admin-avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-family: var(--display); font-size: 14px; }
+.admin-name { display: flex; flex-direction: column; min-width: 0; }
+.admin-name b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-name small { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: #55605b; }
+.dot-on { background: #6fd39a; box-shadow: 0 0 6px #6fd39a; }
+.admin-badge { font-style: normal; font-weight: 800; font-size: 11px; color: #241a08; background: var(--brass); border-radius: 5px; padding: 0 6px; }
+.admin-badge-muted { background: rgba(255, 255, 255, 0.12); color: var(--muted); }
+.admin-id { font-size: 13px; color: var(--muted); font-weight: 700; }
+.admin-balance { font-weight: 800; color: var(--brass-hi); min-width: 80px; text-align: right; }
+.admin-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.admin-log-title { margin-bottom: 8px !important; }
+.admin-log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.admin-log li { display: grid; grid-template-columns: 90px 1fr auto; gap: 10px; align-items: baseline; }
+.admin-log .plus { color: #6fd39a; font-weight: 800; }
+.admin-log .minus { color: #f0a9a0; font-weight: 800; }
+.admin-log i { color: var(--muted); }
+.admin-log small { color: var(--muted); white-space: nowrap; }
+
+@media (max-width: 860px) {
+  .lobby-top { height: auto; flex-wrap: wrap; gap: 10px; padding: 14px 0; }
+  .lobby-top-right { flex-wrap: wrap; }
+  .admin-fields { grid-template-columns: 1fr; }
+  .admin-players li { grid-template-columns: 34px 1fr auto; }
+  .admin-id, .admin-actions { grid-column: 2 / -1; }
+}
