@@ -103,11 +103,11 @@ export function Modal({ open, onClose, children, className = '' }) {
 export function Balance() {
   const balance = useStore(s => s.balance)
   return (
-    <div className="balance" title="Votre solde de jetons">
+    <div className="balance" title="Your chip balance">
       <Chip value={1000} size={26} label={false} />
       <span>{fmt(balance)}</span>
       {balance < 2000 && (
-        <button className="btn btn-ghost btn-xs" onClick={() => send({ t: 'refill' })}>Recharger</button>
+        <button className="btn btn-ghost btn-xs" onClick={() => send({ t: 'refill' })}>Refill</button>
       )}
     </div>
   )
@@ -131,7 +131,7 @@ export function Toasts() {
 export function ConnectionBanner() {
   const status = useStore(s => s.status)
   if (status === 'online') return null
-  return <div className="conn-banner">{status === 'connecting' ? 'Connexion au serveur…' : 'Connexion perdue, nouvelle tentative…'}</div>
+  return <div className="conn-banner">{status === 'connecting' ? 'Connecting to server…' : 'Connection lost, retrying…'}</div>
 }
 
 export function SidePanel({ log }) {
@@ -158,24 +158,24 @@ export function SidePanel({ log }) {
   return (
     <div className={`side-panel ${open ? '' : 'side-panel-closed'}`}>
       <div className="side-tabs">
-        <button className={tab === 'log' ? 'on' : ''} onClick={() => { setTab('log'); setOpen(true) }}>Historique</button>
+        <button className={tab === 'log' ? 'on' : ''} onClick={() => { setTab('log'); setOpen(true) }}>History</button>
         <button className={tab === 'chat' ? 'on' : ''} onClick={() => { setTab('chat'); setOpen(true) }}>
-          Discussion {unread > 0 && <span className="badge">{unread}</span>}
+          Chat {unread > 0 && <span className="badge">{unread}</span>}
         </button>
-        <button className="side-toggle" onClick={() => setOpen(o => !o)} aria-label={open ? 'Réduire' : 'Agrandir'}>{open ? '–' : '+'}</button>
+        <button className="side-toggle" onClick={() => setOpen(o => !o)} aria-label={open ? 'Collapse' : 'Expand'}>{open ? '–' : '+'}</button>
       </div>
       {open && (
         <>
           <div className="side-list" ref={listRef}>
-            {tab === 'log' && (log.length ? log.map((l, i) => <div key={i} className={l.startsWith('—') ? 'log-sep' : 'log-line'}>{l}</div>) : <div className="log-empty">Rien pour l'instant.</div>)}
+            {tab === 'log' && (log.length ? log.map((l, i) => <div key={i} className={l.startsWith('—') ? 'log-sep' : 'log-line'}>{l}</div>) : <div className="log-empty">Nothing yet.</div>)}
             {tab === 'chat' && (chat.length ? chat.map(m => (
               <div key={m.id} className="chat-line"><b style={{ color: `hsl(${hue(m.from)} 60% 70%)` }}>{m.from}</b> {m.text}</div>
-            )) : <div className="log-empty">Dites bonjour à la table.</div>)}
+            )) : <div className="log-empty">Say hi to the table.</div>)}
           </div>
           {tab === 'chat' && (
             <form className="chat-form" onSubmit={submit}>
-              <input value={text} onChange={e => setText(e.target.value)} maxLength={200} placeholder="Écrire un message" />
-              <button className="btn btn-brass btn-xs" type="submit">Envoyer</button>
+              <input value={text} onChange={e => setText(e.target.value)} maxLength={200} placeholder="Write a message" />
+              <button className="btn btn-brass btn-xs" type="submit">Send</button>
             </form>
           )}
         </>

@@ -280,7 +280,7 @@ impl PokerTable {
                     self.error(cid, e);
                 }
             }
-            TableCmd::Bet { cid, .. } => self.error(cid, "Action inconnue au poker"),
+            TableCmd::Bet { cid, .. } => self.error(cid, "Unknown poker action"),
             TableCmd::Chat { cid, text } => {
                 let text: String = text.trim().chars().take(200).collect();
                 if text.is_empty() {
@@ -297,25 +297,25 @@ impl PokerTable {
     }
 
     fn sit(&mut self, cid: u64, seat: usize, buy_in: Option<u64>) -> Result<(), String> {
-        let name = self.watchers.get(&cid).ok_or("Rejoignez la table d'abord")?.name.clone();
+        let name = self.watchers.get(&cid).ok_or("Join the table first")?.name.clone();
         if self.seat_of(cid).is_some() {
-            return Err("Vous êtes déjà assis".into());
+            return Err("You are already seated".into());
         }
         if seat >= self.n() || self.seats[seat].is_some() {
-            return Err("Cette place est occupée".into());
+            return Err("This seat is taken".into());
         }
         let buy = buy_in.unwrap_or(self.cfg.min_buy);
         if buy < self.cfg.min_buy || buy > self.cfg.max_buy {
             return Err(format!(
-                "La cave doit être comprise entre {} et {}",
+                "Buy-in must be between {} and {}",
                 self.cfg.min_buy, self.cfg.max_buy
             ));
         }
         if !self.hub.wallets.take(&name, buy) {
-            return Err("Solde insuffisant".into());
+            return Err("Insufficient balance".into());
         }
         self.seats[seat] = Some(Seat::new(cid, name.clone(), buy));
-        self.push_log(format!("{} s'installe avec {}", name, buy));
+        self.push_log(format!("{} sits down with {}", name, buy));
         self.send_balance(cid, &name);
         self.maybe_schedule_start();
         Ok(())
@@ -342,7 +342,7 @@ impl PokerTable {
             }
             self.hub.wallets.give(&s.name, s.stack);
             self.send_balance(s.cid, &s.name);
-            self.push_log(format!("{} quitte la table", s.name));
+            self.push_log(format!("{} leaves the table", s.name));
         }
     }
 
@@ -372,7 +372,7 @@ impl PokerTable {
                 if let Some(i) = self.to_act {
                     let to_call = self.current_bet.saturating_sub(self.seat(i).bet);
                     if to_call == 0 {
-                        self.seat_mut(i).last_action = Some("Parole".into());
+                        self.seat_mut(i).last_action = Some("Check".into());
                     } else {
                         self.apply_fold(i);
                     }
@@ -436,7 +436,7 @@ impl PokerTable {
                     let timed_out = s.timeouts >= MAX_TIMEOUTS;
                     self.cash_out(i);
                     if timed_out {
-                        self.push_log(format!("{} a été retiré pour inactivité", name));
+                        self.push_log(format!("{} was removed for inactivity", name));
                     }
                 }
             }
@@ -483,13 +483,13 @@ impl PokerTable {
             }
         }
         self.phase = Phase::Preflop;
-        self.push_log(format!("— Main n°{} —", self.hand_no));
+        self.push_log(format!("— Hand #{} —", self.hand_no));
         let small = self.cfg.sb;
         let big = self.cfg.bb;
         self.put(sb, small);
-        self.seat_mut(sb).last_action = Some(format!("Petite blinde {}", small));
+        self.seat_mut(sb).last_action = Some(format!("Small blind {}", small));
         self.put(bb, big);
-        self.seat_mut(bb).last_action = Some(format!("Grosse blinde {}", big));
+        self.seat_mut(bb).last_action = Some(format!("Big blind {}", big));
         self.current_bet = big;
         self.min_raise = big;
         if self.round_complete() {
@@ -528,30 +528,30 @@ impl PokerTable {
     }
 
     fn act(&mut self, cid: u64, kind: &str, amount: Option<u64>) -> Result<(), String> {
-        let i = self.seat_of(cid).ok_or("Vous n'êtes pas assis")?;
+        let i = self.seat_of(cid).ok_or("You are not seated")?;
         if !self.hand_running() || self.to_act != Some(i) {
-            return Err("Ce n'est pas votre tour".into());
+            return Err("It's not your turn".into());
         }
         let to_call = self.current_bet.saturating_sub(self.seat(i).bet);
         match kind {
             "fold" => self.apply_fold(i),
             "check" => {
                 if to_call > 0 {
-                    return Err("Vous ne pouvez pas checker".into());
+                    return Err("You can't check".into());
                 }
-                self.seat_mut(i).last_action = Some("Parole".into());
+                self.seat_mut(i).last_action = Some("Check".into());
             }
             "call" => {
                 if to_call == 0 {
-                    self.seat_mut(i).last_action = Some("Parole".into());
+                    self.seat_mut(i).last_action = Some("Check".into());
                 } else {
                     let a = self.put(i, to_call);
-                    let label = if self.seat(i).all_in { "Tapis".to_string() } else { format!("Suit {}", a) };
+                    let label = if self.seat(i).all_in { "All-in".to_string() } else { format!("Call {}", a) };
                     self.seat_mut(i).last_action = Some(label);
                 }
             }
             "raise" | "bet" => {
-                let target = amount.ok_or("Montant manquant")?;
+                let target = amount.ok_or("Missing amount")?;
                 self.raise_to(i, target)?;
             }
             "allin" => {
@@ -559,16 +559,16 @@ impl PokerTable {
                 if target <= self.current_bet {
                     let stack = self.seat(i).stack;
                     self.put(i, stack);
-                    self.seat_mut(i).last_action = Some("Tapis".into());
+                    self.seat_mut(i).last_action = Some("All-in".into());
                 } else {
                     self.raise_to(i, target)?;
                 }
             }
-            _ => return Err("Action inconnue".into()),
+            _ => return Err("Unknown action".into()),
         }
         let name = self.seat(i).name.clone();
         if let Some(a) = self.seat(i).last_action.clone() {
-            self.push_log(format!("{} : {}", name, a));
+            self.push_log(format!("{}: {}", name, a));
         }
         self.seat_mut(i).timeouts = 0;
         self.after_action(i);
@@ -578,14 +578,14 @@ impl PokerTable {
     fn raise_to(&mut self, i: usize, target: u64) -> Result<(), String> {
         let max = self.seat(i).bet + self.seat(i).stack;
         if target > max {
-            return Err("Tapis insuffisant".into());
+            return Err("Not enough chips".into());
         }
         if target <= self.current_bet {
-            return Err("La relance doit dépasser la mise actuelle".into());
+            return Err("A raise must exceed the current bet".into());
         }
         let raise = target - self.current_bet;
         if raise < self.min_raise && target != max {
-            return Err(format!("Relance minimum à {}", self.current_bet + self.min_raise));
+            return Err(format!("Minimum raise to {}", self.current_bet + self.min_raise));
         }
         let was_open = self.current_bet == 0;
         let add = target - self.seat(i).bet;
@@ -602,11 +602,11 @@ impl PokerTable {
         }
         self.current_bet = target;
         let label = if self.seat(i).all_in {
-            "Tapis".to_string()
+            "All-in".to_string()
         } else if was_open {
-            format!("Mise {}", target)
+            format!("Bet {}", target)
         } else {
-            format!("Relance à {}", target)
+            format!("Raise to {}", target)
         };
         self.seat_mut(i).last_action = Some(label);
         Ok(())
@@ -616,7 +616,7 @@ impl PokerTable {
         let s = self.seat_mut(i);
         s.folded = true;
         s.in_hand = false;
-        s.last_action = Some("Couché".into());
+        s.last_action = Some("Fold".into());
     }
 
     fn after_action(&mut self, i: usize) {
@@ -734,7 +734,7 @@ impl PokerTable {
         let name = s.name.clone();
         self.winners = vec![PokerWinner { seat: w, name: name.clone(), amount: total, hand_name: None, best: vec![] }];
         self.pots_view = vec![total];
-        self.push_log(format!("{} remporte {} sans abattage", name, total));
+        self.push_log(format!("{} wins {} uncontested", name, total));
         self.finish(UNCONTESTED_MS);
     }
 
@@ -780,7 +780,7 @@ impl PokerTable {
                 let name = s.name.clone();
                 let hand_name = s.hand_name.clone();
                 self.push_log(format!(
-                    "{} remporte {} avec {}",
+                    "{} wins {} with {}",
                     name,
                     won[j],
                     hand_name.clone().unwrap_or_default()

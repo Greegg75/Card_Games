@@ -12,8 +12,8 @@ const DEALER = { x: 800, y: 205 }
 
 function resultKind(r) {
   if (r === 'Blackjack') return 'bj'
-  if (r === 'Gagné') return 'win'
-  if (r === 'Égalité') return 'push'
+  if (r === 'Win') return 'win'
+  if (r === 'Push') return 'push'
   return 'lose'
 }
 
@@ -39,7 +39,7 @@ function HandStack({ hand, base, active, roundNo, seatIndex, handIndex }) {
       <AnimatePresence>
         {hand.result && (
           <motion.div className={`bj-result bj-result-${resultKind(hand.result)}`} style={{ x: '-50%' }} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
-            {hand.result}{hand.payout > 0 && hand.result !== 'Égalité' ? ` +${fmt(hand.payout)}` : ''}
+            {hand.result}{hand.payout > 0 && hand.result !== 'Push' ? ` +${fmt(hand.payout)}` : ''}
           </motion.div>
         )}
       </AnimatePresence>
@@ -59,7 +59,7 @@ function BjSeat({ v, i, progress }) {
         {v.you == null && (
           <button className="seat-sit seat-sit-bj" onClick={() => send({ t: 'sit', seat: i })}>
             <span className="seat-sit-plus">+</span>
-            <span>S'asseoir</span>
+            <span>Sit down</span>
           </button>
         )}
       </div>
@@ -92,7 +92,7 @@ function BjSeat({ v, i, progress }) {
         <Avatar name={s.name} size={isYou ? 76 : 66} progress={isTurn ? progress : null} active={isTurn} dim={s.leaving} />
         <div className={`plate ${isTurn ? 'plate-active' : ''}`}>
           <div className="plate-name">{s.name}</div>
-          <div className="plate-stack">{s.last_bet ? `Mise ${fmt(s.last_bet)}` : isYou ? 'Vous' : 'Assis'}</div>
+          <div className="plate-stack">{s.last_bet ? `Bet ${fmt(s.last_bet)}` : isYou ? 'You' : 'Seated'}</div>
         </div>
       </div>
     </>
@@ -107,21 +107,21 @@ function BetBar({ v, remaining }) {
   return (
     <motion.div className="bj-bar" initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 30, opacity: 0 }}>
       <div className="bj-bar-info">
-        <strong>{me.bet > 0 ? `Votre mise : ${fmt(me.bet)}` : 'Placez votre mise'}</strong>
+        <strong>{me.bet > 0 ? `Your bet: ${fmt(me.bet)}` : 'Place your bet'}</strong>
         <span>
-          {v.phase === 'betting' && remaining != null ? `Distribution dans ${Math.ceil(remaining / 1000)} s` : `Mise ${range(v.table.min_bet, v.table.max_bet)}`}
+          {v.phase === 'betting' && remaining != null ? `Dealing in ${Math.ceil(remaining / 1000)}s` : `Bets ${range(v.table.min_bet, v.table.max_bet)}`}
         </span>
       </div>
       <div className="bj-chips">
         {chips.map(c => (
-          <button key={c} className="chip-btn" disabled={balance < c || me.bet + c > v.table.max_bet} onClick={() => bet(c)} aria-label={`Miser ${c}`}>
+          <button key={c} className="chip-btn" disabled={balance < c || me.bet + c > v.table.max_bet} onClick={() => bet(c)} aria-label={`Bet ${c}`}>
             <Chip value={c} size={58} />
           </button>
         ))}
       </div>
       <div className="bj-bar-actions">
-        <button className="btn btn-ghost btn-sm" disabled={!me.bet} onClick={() => send({ t: 'act', kind: 'clear' })}>Effacer</button>
-        <button className="btn btn-ghost btn-sm" disabled={!me.last_bet || me.bet > 0} onClick={() => send({ t: 'act', kind: 'rebet' })}>Remiser {me.last_bet ? fmt(me.last_bet) : ''}</button>
+        <button className="btn btn-ghost btn-sm" disabled={!me.bet} onClick={() => send({ t: 'act', kind: 'clear' })}>Clear</button>
+        <button className="btn btn-ghost btn-sm" disabled={!me.last_bet || me.bet > 0} onClick={() => send({ t: 'act', kind: 'rebet' })}>Rebet {me.last_bet ? fmt(me.last_bet) : ''}</button>
       </div>
     </motion.div>
   )
@@ -143,10 +143,10 @@ function PlayBar({ v }) {
   return (
     <motion.div className="action-bar bj-play" initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 30, opacity: 0 }}>
       <div className="action-buttons">
-        <button className="act act-call" onClick={() => act('hit')}><span>Tirer</span><kbd>H</kbd></button>
-        <button className="act act-fold" onClick={() => act('stand')}><span>Rester</span><kbd>S</kbd></button>
-        {v.can_double && <button className="act act-raise" onClick={() => act('double')}><span>Doubler</span><kbd>D</kbd></button>}
-        {v.can_split && <button className="act act-raise" onClick={() => act('split')}><span>Séparer</span><kbd>P</kbd></button>}
+        <button className="act act-call" onClick={() => act('hit')}><span>Hit</span><kbd>H</kbd></button>
+        <button className="act act-fold" onClick={() => act('stand')}><span>Stand</span><kbd>S</kbd></button>
+        {v.can_double && <button className="act act-raise" onClick={() => act('double')}><span>Double</span><kbd>D</kbd></button>}
+        {v.can_split && <button className="act act-raise" onClick={() => act('split')}><span>Split</span><kbd>P</kbd></button>}
       </div>
     </motion.div>
   )
@@ -156,18 +156,18 @@ function Rules({ onClose }) {
   return (
     <div className="rankings">
       <div className="rankings-head">
-        <h2>Règles du blackjack</h2>
-        <button className="btn btn-ghost btn-xs" onClick={onClose}>Fermer</button>
+        <h2>Blackjack rules</h2>
+        <button className="btn btn-ghost btn-xs" onClick={onClose}>Close</button>
       </div>
       <ul className="rules-list">
-        <li><strong>But du jeu</strong><span>Approcher 21 sans le dépasser et battre la main de la banque.</span></li>
-        <li><strong>Valeur des cartes</strong><span>Les figures valent 10, l'As vaut 1 ou 11, les autres cartes leur valeur.</span></li>
-        <li><strong>Blackjack</strong><span>Un As et une carte de valeur 10 dès les deux premières cartes. Payé 3 pour 2.</span></li>
-        <li><strong>Tirer ou rester</strong><span>Tirez une carte pour vous rapprocher de 21, ou restez sur votre total.</span></li>
-        <li><strong>Doubler</strong><span>Doublez la mise sur vos deux premières cartes et recevez une seule carte de plus.</span></li>
-        <li><strong>Séparer</strong><span>Deux cartes de même valeur peuvent former deux mains, avec une mise égale sur chacune. Jusqu'à quatre mains.</span></li>
-        <li><strong>La banque</strong><span>Tire jusqu'à 16 et reste à partir de 17. Six jeux de 52 cartes dans le sabot.</span></li>
-        <li><strong>Gains</strong><span>Une main gagnante est payée 1 pour 1, une égalité rend la mise.</span></li>
+        <li><strong>Goal</strong><span>Get as close to 21 as you can without going over, and beat the dealer’s hand.</span></li>
+        <li><strong>Card values</strong><span>Face cards are worth 10, an ace is worth 1 or 11, every other card is worth its number.</span></li>
+        <li><strong>Blackjack</strong><span>An ace and a ten-value card as your first two cards. Pays 3 to 2.</span></li>
+        <li><strong>Hit or stand</strong><span>Take another card to get closer to 21, or stand on your total.</span></li>
+        <li><strong>Double down</strong><span>Double your bet on your first two cards and receive exactly one more card.</span></li>
+        <li><strong>Split</strong><span>Two cards of the same value can be split into two hands, with an equal bet on each. Up to four hands.</span></li>
+        <li><strong>The dealer</strong><span>Hits on 16 or less and stands on 17 or more. The shoe holds six 52-card decks.</span></li>
+        <li><strong>Payouts</strong><span>A winning hand pays 1 to 1, a push returns your bet.</span></li>
       </ul>
     </div>
   )
@@ -177,7 +177,7 @@ export default function BlackjackScreen() {
   const v = useStore(s => s.bj)
   const [rules, setRules] = useState(false)
   const remaining = useCountdown(v?.timer_ms)
-  if (!v) return <div className="loading">Ouverture de la table…</div>
+  if (!v) return <div className="loading">Opening the table…</div>
   const progress = remaining != null && v.timer_total_ms ? remaining / v.timer_total_ms : null
   const myTurn = v.you != null && v.turn_seat === v.you && v.phase === 'playing'
   const canBet = v.you != null && (v.phase === 'waiting' || v.phase === 'betting')
@@ -185,14 +185,14 @@ export default function BlackjackScreen() {
   return (
     <div className="screen table-screen">
       <header className="table-top">
-        <button className="btn btn-ghost" onClick={leaveTable}>Quitter la table</button>
+        <button className="btn btn-ghost" onClick={leaveTable}>Leave table</button>
         <div className="table-title">
           <h1>{v.table.name}</h1>
-          <span>Blackjack, mise {range(v.table.min_bet, v.table.max_bet)}{v.round_no ? `, donne n°${v.round_no}` : ''}</span>
+          <span>Blackjack, bets {range(v.table.min_bet, v.table.max_bet)}{v.round_no ? `, round #${v.round_no}` : ''}</span>
         </div>
         <div className="table-top-right">
-          <button className={`btn btn-ghost ${rules ? 'is-on' : ''}`} onClick={() => setRules(r => !r)}>Règles</button>
-          {v.you != null && <button className="btn btn-ghost" onClick={() => send({ t: 'stand' })}>Se lever</button>}
+          <button className={`btn btn-ghost ${rules ? 'is-on' : ''}`} onClick={() => setRules(r => !r)}>Rules</button>
+          {v.you != null && <button className="btn btn-ghost" onClick={() => send({ t: 'stand' })}>Stand up</button>}
           <Balance />
         </div>
       </header>
@@ -214,7 +214,7 @@ export default function BlackjackScreen() {
           ))}
           {v.dealer_value && (
             <div className="bj-value bj-dealer-value" style={{ top: dealerW * 0.7 + 10 }}>
-              Banque {v.dealer_value === 'BJ' ? 'Blackjack' : v.dealer_value}
+              Dealer {v.dealer_value === 'BJ' ? 'Blackjack' : v.dealer_value}
             </div>
           )}
         </div>
@@ -223,7 +223,7 @@ export default function BlackjackScreen() {
 
         {v.phase === 'waiting' && v.seats.every(s => !s || s.bet === 0) && (
           <div className="table-status table-status-bj">
-            {v.you == null ? 'Choisissez une place pour vous asseoir' : 'Placez une mise pour lancer la donne'}
+            {v.you == null ? 'Pick a seat to sit down' : 'Place a bet to start the round'}
           </div>
         )}
       </Stage>
@@ -236,7 +236,7 @@ export default function BlackjackScreen() {
       </AnimatePresence>
 
       {!myTurn && v.phase === 'playing' && v.turn_seat != null && v.seats[v.turn_seat] && (
-        <div className="waiting-hint">{v.turn_seat === v.you ? '' : `${v.seats[v.turn_seat].name} joue…`}</div>
+        <div className="waiting-hint">{v.turn_seat === v.you ? '' : `${v.seats[v.turn_seat].name} is playing…`}</div>
       )}
 
       <AnimatePresence>

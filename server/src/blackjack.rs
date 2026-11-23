@@ -265,15 +265,15 @@ impl BlackjackTable {
     }
 
     fn sit(&mut self, cid: u64, seat: usize) -> Result<(), String> {
-        let name = self.watchers.get(&cid).ok_or("Rejoignez la table d'abord")?.name.clone();
+        let name = self.watchers.get(&cid).ok_or("Join the table first")?.name.clone();
         if self.seat_of(cid).is_some() {
-            return Err("Vous êtes déjà assis".into());
+            return Err("You are already seated".into());
         }
         if seat >= self.seats.len() || self.seats[seat].is_some() {
-            return Err("Cette place est occupée".into());
+            return Err("This seat is taken".into());
         }
         self.seats[seat] = Some(Seat { cid, name: name.clone(), bet: 0, last_bet: 0, hands: Vec::new(), leaving: false });
-        self.push_log(format!("{} rejoint la table", name));
+        self.push_log(format!("{} joins the table", name));
         Ok(())
     }
 
@@ -295,7 +295,7 @@ impl BlackjackTable {
             for h in s.hands.iter_mut() {
                 if !h.done {
                     h.done = true;
-                    h.result = Some("Abandon".into());
+                    h.result = Some("Forfeit".into());
                 }
             }
             if self.turn.map(|t| t.0) == Some(i) {
@@ -304,7 +304,7 @@ impl BlackjackTable {
         } else {
             self.seats[i] = None;
         }
-        self.push_log(format!("{} quitte la table", name));
+        self.push_log(format!("{} leaves the table", name));
         if self.phase == Phase::Betting && !self.seats.iter().flatten().any(|s| s.bet > 0) {
             self.phase = Phase::Waiting;
             self.deadline = None;
@@ -312,20 +312,20 @@ impl BlackjackTable {
     }
 
     fn bet(&mut self, cid: u64, amount: u64) -> Result<(), String> {
-        let i = self.seat_of(cid).ok_or("Asseyez-vous pour miser")?;
+        let i = self.seat_of(cid).ok_or("Take a seat to bet")?;
         if !matches!(self.phase, Phase::Waiting | Phase::Betting) {
-            return Err("Les mises sont fermées".into());
+            return Err("Betting is closed".into());
         }
         if amount == 0 {
-            return Err("Mise invalide".into());
+            return Err("Invalid bet".into());
         }
         let s = self.seats[i].as_ref().unwrap();
         if s.bet + amount > self.cfg.max_bet {
-            return Err(format!("Mise maximum : {}", self.cfg.max_bet));
+            return Err(format!("Maximum bet: {}", self.cfg.max_bet));
         }
         let name = s.name.clone();
         if !self.hub.wallets.take(&name, amount) {
-            return Err("Solde insuffisant".into());
+            return Err("Insufficient balance".into());
         }
         self.seats[i].as_mut().unwrap().bet += amount;
         self.send_balance(cid, &name);
@@ -349,11 +349,11 @@ impl BlackjackTable {
     }
 
     fn act(&mut self, cid: u64, kind: &str) -> Result<(), String> {
-        let i = self.seat_of(cid).ok_or("Vous n'êtes pas assis")?;
+        let i = self.seat_of(cid).ok_or("You are not seated")?;
         match kind {
             "clear" => {
                 if !matches!(self.phase, Phase::Waiting | Phase::Betting) {
-                    return Err("Les mises sont fermées".into());
+                    return Err("Betting is closed".into());
                 }
                 let s = self.seats[i].as_mut().unwrap();
                 let (name, bet) = (s.name.clone(), s.bet);
@@ -369,19 +369,19 @@ impl BlackjackTable {
             "rebet" => {
                 let last = self.seats[i].as_ref().unwrap().last_bet;
                 if last == 0 {
-                    return Err("Aucune mise précédente".into());
+                    return Err("No previous bet".into());
                 }
                 self.bet(cid, last)
             }
             "hit" | "stand" | "double" | "split" => self.play(i, kind),
-            _ => Err("Action inconnue".into()),
+            _ => Err("Unknown action".into()),
         }
     }
 
     fn play(&mut self, i: usize, kind: &str) -> Result<(), String> {
-        let Some((ti, hi)) = self.turn else { return Err("Ce n'est pas votre tour".into()) };
+        let Some((ti, hi)) = self.turn else { return Err("It's not your turn".into()) };
         if ti != i || self.phase != Phase::Playing {
-            return Err("Ce n'est pas votre tour".into());
+            return Err("It's not your turn".into());
         }
         let name = self.seats[i].as_ref().unwrap().name.clone();
         let cid = self.seats[i].as_ref().unwrap().cid;
@@ -393,20 +393,20 @@ impl BlackjackTable {
                 if value(&h.cards).0 >= 21 {
                     h.done = true;
                 }
-                self.push_log(format!("{} tire", name));
+                self.push_log(format!("{} hits", name));
             }
             "stand" => {
                 self.seats[i].as_mut().unwrap().hands[hi].done = true;
-                self.push_log(format!("{} reste", name));
+                self.push_log(format!("{} stands", name));
             }
             "double" => {
                 let h = &self.seats[i].as_ref().unwrap().hands[hi];
                 if h.cards.len() != 2 {
-                    return Err("Doubler n'est possible qu'avec deux cartes".into());
+                    return Err("You can only double down on two cards".into());
                 }
                 let bet = h.bet;
                 if !self.hub.wallets.take(&name, bet) {
-                    return Err("Solde insuffisant pour doubler".into());
+                    return Err("Insufficient balance to double down".into());
                 }
                 let c = self.draw();
                 let h = &mut self.seats[i].as_mut().unwrap().hands[hi];
@@ -415,20 +415,20 @@ impl BlackjackTable {
                 h.cards.push(c);
                 h.done = true;
                 self.send_balance(cid, &name);
-                self.push_log(format!("{} double", name));
+                self.push_log(format!("{} doubles down", name));
             }
             "split" => {
                 let s = self.seats[i].as_ref().unwrap();
                 let h = &s.hands[hi];
                 if h.cards.len() != 2 || card_points(&h.cards[0]) != card_points(&h.cards[1]) {
-                    return Err("Séparation impossible".into());
+                    return Err("These cards cannot be split".into());
                 }
                 if s.hands.len() >= 4 {
-                    return Err("Nombre maximum de mains atteint".into());
+                    return Err("Maximum number of hands reached".into());
                 }
                 let bet = h.bet;
                 if !self.hub.wallets.take(&name, bet) {
-                    return Err("Solde insuffisant pour séparer".into());
+                    return Err("Insufficient balance to split".into());
                 }
                 let aces = h.cards[0].rank == 14;
                 let c1 = self.draw();
@@ -453,7 +453,7 @@ impl BlackjackTable {
                 }
                 s.hands.insert(hi + 1, nh);
                 self.send_balance(cid, &name);
-                self.push_log(format!("{} sépare", name));
+                self.push_log(format!("{} splits", name));
             }
             _ => unreachable!(),
         }
@@ -486,7 +486,7 @@ impl BlackjackTable {
     fn deal_round(&mut self) {
         if self.shoe.len() < DECKS * 52 / 4 {
             self.shoe = shuffled_decks(DECKS);
-            self.push_log("Nouveau sabot mélangé".into());
+            self.push_log("New shoe shuffled".into());
         }
         let min = self.cfg.min_bet;
         let mut refunds = Vec::new();
@@ -499,7 +499,7 @@ impl BlackjackTable {
         for (cid, name, bet) in refunds {
             self.hub.wallets.give(&name, bet);
             self.send_balance(cid, &name);
-            self.error(cid, format!("Mise minimum : {} — mise remboursée", min));
+            self.error(cid, format!("Minimum bet: {} — bet refunded", min));
         }
         let players: Vec<usize> = (0..self.seats.len())
             .filter(|&i| self.seats[i].as_ref().map(|s| s.bet > 0).unwrap_or(false))
@@ -526,7 +526,7 @@ impl BlackjackTable {
         }
         self.hole_hidden = true;
         self.phase = Phase::Playing;
-        self.push_log(format!("— Donne n°{} —", self.round_no));
+        self.push_log(format!("— Round #{} —", self.round_no));
         for &i in &players {
             let h = &mut self.seats[i].as_mut().unwrap().hands[0];
             if value(&h.cards).0 == 21 {
@@ -536,7 +536,7 @@ impl BlackjackTable {
         let up = card_points(&self.dealer[0]);
         if (up == 1 || up == 10) && value(&self.dealer).0 == 21 {
             self.hole_hidden = false;
-            self.push_log("La banque a un Blackjack".into());
+            self.push_log("Dealer has Blackjack".into());
             self.settle();
             return;
         }
@@ -606,21 +606,21 @@ impl BlackjackTable {
                 let (pt, _) = value(&h.cards);
                 let bj = h.is_blackjack();
                 let (res, pay) = if pt > 21 {
-                    ("Brûlé", 0)
+                    ("Bust", 0)
                 } else if dealer_bj {
                     if bj {
-                        ("Égalité", h.bet)
+                        ("Push", h.bet)
                     } else {
-                        ("Perdu", 0)
+                        ("Lose", 0)
                     }
                 } else if bj {
                     ("Blackjack", h.bet * 5 / 2)
                 } else if dealer_bust || pt > dt {
-                    ("Gagné", h.bet * 2)
+                    ("Win", h.bet * 2)
                 } else if pt == dt {
-                    ("Égalité", h.bet)
+                    ("Push", h.bet)
                 } else {
-                    ("Perdu", 0)
+                    ("Lose", 0)
                 };
                 h.result = Some(res.to_string());
                 h.payout = pay;
@@ -638,7 +638,7 @@ impl BlackjackTable {
                 self.send_balance(cid, &name);
             }
             if total > 0 {
-                self.push_log(format!("{} encaisse {}", name, total));
+                self.push_log(format!("{} collects {}", name, total));
             }
         }
         self.turn = None;

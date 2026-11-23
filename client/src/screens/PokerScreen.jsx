@@ -35,12 +35,12 @@ function buttonXY(d, n) {
 function Seat({ s, view, index, d, n, isYou, progress, winner, onSit }) {
   const { x, y } = seatXY(d, n)
   if (!s) {
-    if (view.you != null) return <div className="seat seat-empty" style={{ left: x, top: y }}><div className="seat-free">Libre</div></div>
+    if (view.you != null) return <div className="seat seat-empty" style={{ left: x, top: y }}><div className="seat-free">Open</div></div>
     return (
       <div className="seat seat-empty" style={{ left: x, top: y }}>
         <button className="seat-sit" onClick={() => onSit(index)}>
           <span className="seat-sit-plus">+</span>
-          <span>S'asseoir</span>
+          <span>Sit down</span>
         </button>
       </div>
     )
@@ -75,7 +75,7 @@ function Seat({ s, view, index, d, n, isYou, progress, winner, onSit }) {
       <Avatar name={s.name} size={isYou ? 92 : 80} progress={active ? progress : null} active={active} dim={s.folded} winner={!!winner} />
       <div className={`plate ${active ? 'plate-active' : ''} ${winner ? 'plate-winner' : ''}`}>
         <div className="plate-name">{s.name}</div>
-        <div className="plate-stack">{s.all_in && s.stack === 0 ? 'Tapis' : fmt(s.stack)}</div>
+        <div className="plate-stack">{s.all_in && s.stack === 0 ? 'All-in' : fmt(s.stack)}</div>
       </div>
       <AnimatePresence>
         {s.last_action && !winner && (
@@ -91,11 +91,11 @@ function Seat({ s, view, index, d, n, isYou, progress, winner, onSit }) {
 }
 
 function tagKind(a) {
-  if (a.startsWith('Couché')) return 'fold'
-  if (a.startsWith('Tapis')) return 'allin'
-  if (a.startsWith('Relance') || a.startsWith('Mise')) return 'raise'
-  if (a.startsWith('Suit')) return 'call'
-  if (a.includes('blinde')) return 'blind'
+  if (a.startsWith('Fold')) return 'fold'
+  if (a.startsWith('All-in')) return 'allin'
+  if (a.startsWith('Raise') || a.startsWith('Bet')) return 'raise'
+  if (a.startsWith('Call')) return 'call'
+  if (a.includes('blind')) return 'blind'
   return 'check'
 }
 
@@ -128,31 +128,31 @@ function ActionBar({ v }) {
         <div className="raise-row">
           <div className="presets">
             <button onClick={() => setAmt(v.min_raise_to)}>Min</button>
-            <button onClick={() => setAmt(potRaise(0.5))}>½ pot</button>
-            <button onClick={() => setAmt(potRaise(0.75))}>¾ pot</button>
+            <button onClick={() => setAmt(potRaise(0.5))}>½ Pot</button>
+            <button onClick={() => setAmt(potRaise(0.75))}>¾ Pot</button>
             <button onClick={() => setAmt(potRaise(1))}>Pot</button>
-            <button onClick={() => setAmt(v.max_raise_to)}>Tapis</button>
+            <button onClick={() => setAmt(v.max_raise_to)}>All-in</button>
           </div>
           <div className="slider-row">
-            <input type="range" min={v.min_raise_to} max={v.max_raise_to} step={step} value={amt} onChange={e => setAmt(Number(e.target.value))} aria-label="Montant de la relance" />
-            <input type="number" className="amount-input" min={v.min_raise_to} max={v.max_raise_to} value={amt} onChange={e => setAmt(Number(e.target.value))} onBlur={() => setAmt(clamp(amt))} aria-label="Montant" />
+            <input type="range" min={v.min_raise_to} max={v.max_raise_to} step={step} value={amt} onChange={e => setAmt(Number(e.target.value))} aria-label="Raise amount" />
+            <input type="number" className="amount-input" min={v.min_raise_to} max={v.max_raise_to} value={amt} onChange={e => setAmt(Number(e.target.value))} onBlur={() => setAmt(clamp(amt))} aria-label="Amount" />
           </div>
         </div>
       )}
       <div className="action-buttons">
         <button className="act act-fold" onClick={() => act('fold')}>
-          <span>Se coucher</span><kbd>F</kbd>
+          <span>Fold</span><kbd>F</kbd>
         </button>
         {v.to_call === 0 ? (
-          <button className="act act-call" onClick={() => act('check')}><span>Parole</span><kbd>C</kbd></button>
+          <button className="act act-call" onClick={() => act('check')}><span>Check</span><kbd>C</kbd></button>
         ) : (
           <button className="act act-call" onClick={() => act('call')}>
-            <span>{v.to_call >= me.stack ? 'Tapis' : 'Suivre'}</span><b>{fmt(v.to_call)}</b><kbd>C</kbd>
+            <span>{v.to_call >= me.stack ? 'All-in' : 'Call'}</span><b>{fmt(v.to_call)}</b><kbd>C</kbd>
           </button>
         )}
         {canRaise && (
           <button className="act act-raise" onClick={raise}>
-            <span>{isAllIn ? 'Tapis' : v.current_bet === 0 ? 'Miser' : 'Relancer à'}</span><b>{fmt(Math.min(amt, v.max_raise_to))}</b><kbd>R</kbd>
+            <span>{isAllIn ? 'All-in' : v.current_bet === 0 ? 'Bet' : 'Raise to'}</span><b>{fmt(Math.min(amt, v.max_raise_to))}</b><kbd>R</kbd>
           </button>
         )}
       </div>
@@ -167,24 +167,24 @@ function BuyIn({ table, seat, onClose }) {
   const ok = balance >= table.min_buy
   return (
     <div className="buyin">
-      <h2>Prendre place</h2>
-      <p>Choisissez le montant de votre cave pour la table {table.name}. Les jetons restants reviennent dans votre solde quand vous quittez la table.</p>
+      <h2>Take a seat</h2>
+      <p>Choose your buy-in for {table.name}. Any chips you have left go back to your balance when you leave the table.</p>
       {ok ? (
         <>
           <div className="buyin-amount">{fmt(amt)}</div>
-          <input type="range" min={table.min_buy} max={max} step={table.big_blind} value={amt} onChange={e => setAmt(Number(e.target.value))} aria-label="Montant de la cave" />
-          <div className="buyin-range"><span>Min. {fmt(table.min_buy)}</span><span>Max. {fmt(max)}</span></div>
+          <input type="range" min={table.min_buy} max={max} step={table.big_blind} value={amt} onChange={e => setAmt(Number(e.target.value))} aria-label="Buy-in amount" />
+          <div className="buyin-range"><span>Min {fmt(table.min_buy)}</span><span>Max {fmt(max)}</span></div>
           <div className="modal-actions">
-            <button className="btn btn-ghost" onClick={onClose}>Annuler</button>
-            <button className="btn btn-brass" onClick={() => { send({ t: 'sit', seat, buy_in: amt }); onClose() }}>S'asseoir avec {fmt(amt)}</button>
+            <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+            <button className="btn btn-brass" onClick={() => { send({ t: 'sit', seat, buy_in: amt }); onClose() }}>Sit down with {fmt(amt)}</button>
           </div>
         </>
       ) : (
         <>
-          <p className="buyin-warn">Il vous faut au moins {fmt(table.min_buy)} jetons pour cette table.</p>
+          <p className="buyin-warn">You need at least {fmt(table.min_buy)} chips for this table.</p>
           <div className="modal-actions">
-            <button className="btn btn-ghost" onClick={onClose}>Fermer</button>
-            {balance < 2000 && <button className="btn btn-brass" onClick={() => send({ t: 'refill' })}>Recharger mon solde</button>}
+            <button className="btn btn-ghost" onClick={onClose}>Close</button>
+            {balance < 2000 && <button className="btn btn-brass" onClick={() => send({ t: 'refill' })}>Refill my balance</button>}
           </div>
         </>
       )}
@@ -201,7 +201,7 @@ function PotDisplay({ v }) {
       {v.phase !== 'showdown' && <ChipStack amount={v.pot} r={15} showLabel={false} />}
       <div className="pot-pills">
         {show.map((p, i) => p > 0 && (
-          <div key={i} className="pot-pill">{show.length > 1 ? (i === 0 ? 'Pot principal' : `Pot annexe ${i}`) : 'Pot'} <b>{fmt(p)}</b></div>
+          <div key={i} className="pot-pill">{show.length > 1 ? (i === 0 ? 'Main pot' : `Side pot ${i}`) : 'Pot'} <b>{fmt(p)}</b></div>
         ))}
       </div>
     </div>
@@ -219,7 +219,7 @@ export default function PokerScreen() {
     if (v?.phase === 'showdown') for (const w of v.winners) m[w.seat] = w
     return m
   }, [v])
-  if (!v) return <div className="loading">Ouverture de la table…</div>
+  if (!v) return <div className="loading">Opening the table…</div>
   const n = v.seats.length
   const rot = i => (v.you != null ? (i - v.you + n) % n : i)
   const progress = remaining != null && v.timer_total_ms ? remaining / v.timer_total_ms : null
@@ -230,20 +230,20 @@ export default function PokerScreen() {
   return (
     <div className="screen table-screen">
       <header className="table-top">
-        <button className="btn btn-ghost" onClick={leaveTable}>Quitter la table</button>
+        <button className="btn btn-ghost" onClick={leaveTable}>Leave table</button>
         <div className="table-title">
           <h1>{v.table.name}</h1>
-          <span>Texas Hold'em No Limit, blindes {fmt(v.table.small_blind)}/{fmt(v.table.big_blind)}{v.hand_no ? `, main n°${v.hand_no}` : ''}</span>
+          <span>No-Limit Texas Hold'em, blinds {fmt(v.table.small_blind)}/{fmt(v.table.big_blind)}{v.hand_no ? `, hand #${v.hand_no}` : ''}</span>
         </div>
         <div className="table-top-right">
-          <button className={`btn btn-ghost ${rankings ? 'is-on' : ''}`} onClick={() => setRankings(r => !r)}>Classement des mains</button>
-          {v.you != null && <button className="btn btn-ghost" onClick={() => send({ t: 'stand' })}>Se lever</button>}
+          <button className={`btn btn-ghost ${rankings ? 'is-on' : ''}`} onClick={() => setRankings(r => !r)}>Hand rankings</button>
+          {v.you != null && <button className="btn btn-ghost" onClick={() => send({ t: 'stand' })}>Stand up</button>}
           <Balance />
         </div>
       </header>
 
       <Stage>
-        <PokerFelt theme={v.table.theme} title={`Blindes ${fmt(v.table.small_blind)}/${fmt(v.table.big_blind)}`} />
+        <PokerFelt theme={v.table.theme} title={`Blinds ${fmt(v.table.small_blind)}/${fmt(v.table.big_blind)}`} />
 
         <div className="board">
           <AnimatePresence>
@@ -314,7 +314,7 @@ export default function PokerScreen() {
         <AnimatePresence>
           {v.phase === 'showdown' && topWinner && (
             <motion.div key={`banner-${v.hand_no}`} className="win-banner" style={{ x: '-50%' }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <strong>{topWinner.name === me ? 'Vous remportez' : `${topWinner.name} remporte`} {fmt(topWinner.amount)}</strong>
+              <strong>{topWinner.name === me ? 'You win' : `${topWinner.name} wins`} {fmt(topWinner.amount)}</strong>
               {topWinner.hand_name && <span>{topWinner.hand_name}</span>}
               {v.winners.length > 1 && <span>{v.winners.slice(1).map(w => `${w.name} +${fmt(w.amount)}`).join(', ')}</span>}
             </motion.div>
@@ -324,8 +324,8 @@ export default function PokerScreen() {
         {v.phase === 'waiting' && (
           <div className="table-status">
             {seated < 2
-              ? (v.you == null ? 'Choisissez une place pour vous asseoir' : 'En attente d’un autre joueur')
-              : `La partie commence dans ${Math.ceil((remaining ?? 0) / 1000)} s`}
+              ? (v.you == null ? 'Pick a seat to sit down' : 'Waiting for another player')
+              : `Game starts in ${Math.ceil((remaining ?? 0) / 1000)}s`}
           </div>
         )}
       </Stage>
@@ -335,7 +335,7 @@ export default function PokerScreen() {
       <AnimatePresence>{myTurn && <ActionBar key={`${v.hand_no}-${v.phase}-${v.current_bet}`} v={v} />}</AnimatePresence>
 
       {!myTurn && v.you != null && v.to_act != null && v.seats[v.to_act] && (
-        <div className="waiting-hint">{v.seats[v.to_act].name} réfléchit…</div>
+        <div className="waiting-hint">{v.seats[v.to_act].name} is thinking…</div>
       )}
 
       <AnimatePresence>

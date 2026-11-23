@@ -73,8 +73,8 @@ export default function BlackjackFelt({ theme = 'crimson' }) {
         <path d={felt} fill="none" stroke="#000" strokeOpacity="0.5" strokeWidth="28" filter="url(#innerShade)" />
         <ellipse cx="800" cy="110" rx="760" ry="420" fill="url(#spot)" />
         <g className="bj-print">
-          <text fontSize="26" letterSpacing="3"><textPath href="#bjArc3" startOffset="50%" textAnchor="middle">Le blackjack paie 3 pour 2</textPath></text>
-          <text fontSize="19" letterSpacing="2" opacity="0.8"><textPath href="#bjArc2" startOffset="50%" textAnchor="middle">La banque tire jusqu'à 16 et reste à 17</textPath></text>
+          <text fontSize="26" letterSpacing="3"><textPath href="#bjArc3" startOffset="50%" textAnchor="middle">Blackjack pays 3 to 2</textPath></text>
+          <text fontSize="19" letterSpacing="2" opacity="0.8"><textPath href="#bjArc2" startOffset="50%" textAnchor="middle">Dealer must hit 16 and stand on 17</textPath></text>
         </g>
         <path d="M470 110 A 330 320 0 0 0 1130 110" fill="none" stroke="#fff" strokeOpacity="0.12" strokeWidth="2" />
         <path d={felt} fill="url(#vignette)" />
