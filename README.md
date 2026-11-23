@@ -76,16 +76,29 @@ Le serveur affiche deux adresses :
 
 Pour tester seul à plusieurs joueurs : ouvrez une fenêtre normale et une fenêtre de navigation privée avec deux pseudos différents.
 
-## Jouer à distance (hors du même réseau)
+## Jouer à distance avec une adresse fixe (ngrok)
 
-Avec un tunnel Cloudflare, sans configurer votre box :
+Pour jouer avec des amis qui ne sont pas sur le même Wi-Fi, l'hôte ouvre un tunnel ngrok. L'adresse est gratuite et **ne change jamais** : envoyez-la une fois, vos amis pourront la réutiliser à chaque partie (favori, historique, ancien message).
+
+- **Mac** : double-cliquez sur `en-ligne.command`
+- **Windows** : double-cliquez sur `en-ligne.bat`
+
+Le script installe ngrok s'il manque (via Homebrew sur Mac, winget sous Windows), prépare le site, démarre le serveur, ouvre le tunnel puis affiche l'adresse à partager, du type `https://xxxx.ngrok-free.dev`, en la copiant dans le presse-papiers. Fermez la fenêtre pour tout arrêter.
+
+**Première utilisation uniquement** : créez un compte gratuit sur https://dashboard.ngrok.com/signup. Le script ouvre la page de votre authtoken : copiez-le et collez-le dans la fenêtre. Il est enregistré sur l'ordinateur, il ne sera plus demandé.
+
+À savoir :
+- L'adresse est liée au compte ngrok de l'hôte : c'est toujours la même personne qui doit lancer le tunnel pour garder la même adresse.
+- À la première visite, ngrok affiche une page d'avertissement : il suffit de cliquer sur « Visit Site ».
+- Le compte gratuit permet un seul tunnel à la fois et environ 1 Go de trafic par mois, largement suffisant pour des parties entre amis.
+- Sur Mac, si le double-clic affiche « permission refusée », lancez une fois `chmod +x en-ligne.command`.
+
+Alternative sans compte, avec une adresse qui change à chaque lancement :
 
 ```bash
 brew install cloudflared          # Windows : winget install Cloudflare.cloudflared
 cloudflared tunnel --url http://localhost:3000
 ```
-
-Partagez l'adresse `https://….trycloudflare.com` affichée. Le client passe automatiquement en `wss://`.
 
 ## Mode développement (rechargement à chaud)
 
