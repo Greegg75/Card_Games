@@ -145,11 +145,25 @@ fn verify_password(password: &str, hash: &str) -> bool {
 }
 
 impl Accounts {
-    pub fn load(path: PathBuf, legacy: PathBuf, admins: PathBuf) -> Self {
-        let mut store: Store = std::fs::read_to_string(&path)
-            .ok()
-            .and_then(|s| serde_json::from_str(&s).ok())
-            .unwrap_or_default();
+    pub fn load(path: PathBuf, legacy: PathBuf, admins: PathBuf) -> Result<Self, String> {
+        let mut store: Store = match std::fs::read_to_string(&path) {
+            Ok(text) => match serde_json::from_str::<Store>(&text) {
+                Ok(store) => {
+                    if !store.accounts.is_empty() {
+                        let _ = std::fs::write(path.with_extension("json.bak"), &text);
+                    }
+                    store
+                }
+                Err(e) => {
+                    return Err(format!(
+                        "{} cannot be read ({}). Nothing was changed: fix the file or replace it with accounts.json.bak, then restart.",
+                        path.display(),
+                        e
+                    ))
+                }
+            },
+            Err(_) => Store::default(),
+        };
         if store.accounts.is_empty() {
             let old: HashMap<String, u64> = std::fs::read_to_string(&legacy)
                 .ok()
@@ -163,9 +177,13 @@ impl Accounts {
                 );
             }
         }
+        let shown = std::fs::canonicalize(path.parent().unwrap_or(&path))
+            .map(|d| d.join(path.file_name().unwrap_or_default()))
+            .unwrap_or_else(|_| path.clone());
+        tracing::info!("Accounts: {} loaded from {}", store.accounts.len(), shown.display());
         let accounts = Self { path, store: Mutex::new(store), admins: AdminList::new(admins) };
         accounts.save(&accounts.store.lock().unwrap());
-        accounts
+        Ok(accounts)
     }
 
     fn fresh_id(store: &Store) -> u32 {
@@ -379,7 +397,30 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("aurum-test-{}", new_token()));
         std::fs::create_dir_all(&dir).unwrap();
         std::fs::write(dir.join("admins.txt"), "Greg\n\n# commentaire\n  ENZO  \n").unwrap();
-        Accounts::load(dir.join("accounts.json"), dir.join("wallets.json"), dir.join("admins.txt"))
+        Accounts::load(dir.join("accounts.json"), dir.join("wallets.json"), dir.join("admins.txt")).unwrap()
+    }
+
+    #[test]
+    fn unreadable_file_is_never_overwritten() {
+        let dir = std::env::temp_dir().join(format!("aurum-test-{}", new_token()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let broken = "{\"accounts\": {\"greg\": {\"name\": \"Greg\", \"id\": 123456, \"balance\": 50,}}}";
+        std::fs::write(dir.join("accounts.json"), broken).unwrap();
+        let r = Accounts::load(dir.join("accounts.json"), dir.join("wallets.json"), dir.join("admins.txt"));
+        assert!(r.is_err());
+        assert_eq!(std::fs::read_to_string(dir.join("accounts.json")).unwrap(), broken);
+    }
+
+    #[test]
+    fn backup_is_written_on_start() {
+        let dir = std::env::temp_dir().join(format!("aurum-test-{}", new_token()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let a = Accounts::load(dir.join("accounts.json"), dir.join("wallets.json"), dir.join("admins.txt")).unwrap();
+        a.register("Greg", "secret").unwrap();
+        drop(a);
+        let b = Accounts::load(dir.join("accounts.json"), dir.join("wallets.json"), dir.join("admins.txt")).unwrap();
+        assert!(b.login("Greg", "secret").is_ok());
+        assert!(std::fs::read_to_string(dir.join("accounts.json.bak")).unwrap().contains("Greg"));
     }
 
     #[test]

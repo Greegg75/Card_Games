@@ -44,7 +44,12 @@ impl Hub {
                 data_dir.join("accounts.json"),
                 data_dir.join("wallets.json"),
                 PathBuf::from(std::env::var("ADMINS_FILE").unwrap_or_else(|_| "admins.txt".into())),
-            ),
+            )
+            .unwrap_or_else(|e| {
+                tracing::error!("{}", e);
+                eprintln!("\n{}\n", e);
+                std::process::exit(1);
+            }),
             tables: RwLock::new(HashMap::new()),
             order: RwLock::new(Vec::new()),
             summaries: RwLock::new(HashMap::new()),
