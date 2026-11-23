@@ -45,7 +45,7 @@ async fn main() {
     let index = Path::new(&static_dir).join("index.html");
     if !index.exists() {
         tracing::warn!(
-            "Frontend introuvable dans {} — lancez `npm run build` dans client/ (ou utilisez `npm run dev`)",
+            "Frontend not found in {} — run `npm run build` in client/ (or use `npm run dev`)",
             static_dir
         );
     }
@@ -53,7 +53,7 @@ async fn main() {
         let built = std::fs::metadata(&index).and_then(|m| m.modified()).ok();
         if let (Some(built), Some(changed)) = (built, newest(&src)) {
             if changed > built {
-                tracing::warn!("Le site n'est pas à jour par rapport au code : lancez `npm run build` dans client/ puis relancez le serveur");
+                tracing::warn!("The website is out of date: run `npm run build` in client/ and restart the server");
             }
         }
     }
@@ -65,13 +65,13 @@ async fn main() {
         .fallback_service(files);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    let listener = tokio::net::TcpListener::bind(addr).await.expect("Port déjà utilisé");
+    let listener = tokio::net::TcpListener::bind(addr).await.expect("Port already in use");
 
     println!();
-    println!("  ♠ ♥  Aurum Club — serveur prêt  ♦ ♣");
-    println!("  Sur cette machine : http://localhost:{}", port);
+    println!("  ♠ ♥  Aurum Club — server ready  ♦ ♣");
+    println!("  On this machine : http://localhost:{}", port);
     if let Some(ip) = lan_ip() {
-        println!("  Sur le réseau     : http://{}:{}", ip, port);
+        println!("  On the network  : http://{}:{}", ip, port);
     }
     println!();
 

@@ -169,61 +169,53 @@ pub fn evaluate(input: &[Card]) -> HandValue {
 
 fn singular(r: u8) -> &'static str {
     match r {
-        14 => "As",
-        13 => "Roi",
-        12 => "Dame",
-        11 => "Valet",
-        10 => "Dix",
-        9 => "Neuf",
-        8 => "Huit",
-        7 => "Sept",
+        14 => "Ace",
+        13 => "King",
+        12 => "Queen",
+        11 => "Jack",
+        10 => "Ten",
+        9 => "Nine",
+        8 => "Eight",
+        7 => "Seven",
         6 => "Six",
-        5 => "Cinq",
-        4 => "Quatre",
-        3 => "Trois",
-        _ => "Deux",
+        5 => "Five",
+        4 => "Four",
+        3 => "Three",
+        _ => "Two",
     }
 }
 
 fn plural(r: u8) -> &'static str {
     match r {
-        14 => "As",
-        13 => "Rois",
-        12 => "Dames",
-        11 => "Valets",
-        10 => "Dix",
-        9 => "Neuf",
-        8 => "Huit",
-        7 => "Sept",
-        6 => "Six",
-        5 => "Cinq",
-        4 => "Quatre",
-        3 => "Trois",
-        _ => "Deux",
-    }
-}
-
-fn de(r: u8) -> String {
-    if r == 14 {
-        "d'As".to_string()
-    } else {
-        format!("de {}", plural(r))
+        14 => "Aces",
+        13 => "Kings",
+        12 => "Queens",
+        11 => "Jacks",
+        10 => "Tens",
+        9 => "Nines",
+        8 => "Eights",
+        7 => "Sevens",
+        6 => "Sixes",
+        5 => "Fives",
+        4 => "Fours",
+        3 => "Threes",
+        _ => "Twos",
     }
 }
 
 pub fn describe(v: &HandValue) -> String {
     let k = |i: usize| v.kickers.get(i).copied().unwrap_or(2);
     match v.category {
-        8 if k(0) == 14 => "Quinte flush royale".to_string(),
-        8 => format!("Quinte flush hauteur {}", singular(k(0))),
-        7 => format!("Carré {}", de(k(0))),
-        6 => format!("Full aux {} par les {}", plural(k(0)), plural(k(1))),
-        5 => format!("Couleur hauteur {}", singular(k(0))),
-        4 => format!("Quinte hauteur {}", singular(k(0))),
-        3 => format!("Brelan {}", de(k(0))),
-        2 => format!("Double paire {} et {}", plural(k(0)), plural(k(1))),
-        1 => format!("Paire {}", de(k(0))),
-        _ => format!("Hauteur {}", singular(k(0))),
+        8 if k(0) == 14 => "Royal flush".to_string(),
+        8 => format!("Straight flush, {} high", singular(k(0))),
+        7 => format!("Four of a kind, {}", plural(k(0))),
+        6 => format!("Full house, {} full of {}", plural(k(0)), plural(k(1))),
+        5 => format!("Flush, {} high", singular(k(0))),
+        4 => format!("Straight, {} high", singular(k(0))),
+        3 => format!("Three of a kind, {}", plural(k(0))),
+        2 => format!("Two pair, {} and {}", plural(k(0)), plural(k(1))),
+        1 => format!("Pair of {}", plural(k(0))),
+        _ => format!("High card, {}", singular(k(0))),
     }
 }
 
