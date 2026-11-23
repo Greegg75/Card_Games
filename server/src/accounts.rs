@@ -77,9 +77,9 @@ impl AdminList {
         let list = Self { path, cache: Mutex::new((None, HashSet::new())) };
         let names = list.names();
         if names.is_empty() {
-            tracing::warn!("Aucun administrateur : ajoutez des pseudos dans {}", list.path.display());
+            tracing::warn!("No admins: add usernames to {}", list.path.display());
         } else {
-            tracing::info!("Administrateurs ({}) : {}", list.path.display(), names.join(", "));
+            tracing::info!("Admins ({}): {}", list.path.display(), names.join(", "));
         }
         list
     }
@@ -135,7 +135,7 @@ fn hash_password(password: &str) -> Result<String, String> {
     Argon2::default()
         .hash_password(password.as_bytes(), &salt)
         .map(|h| h.to_string())
-        .map_err(|_| "Erreur interne lors de la création du compte".to_string())
+        .map_err(|_| "Internal error while creating the account".to_string())
 }
 
 fn verify_password(password: &str, hash: &str) -> bool {
@@ -201,13 +201,13 @@ impl Accounts {
 
     pub fn register(&self, name: &str, password: &str) -> Result<Session, String> {
         if password.chars().count() < 4 {
-            return Err("Le mot de passe doit contenir au moins 4 caractères".into());
+            return Err("Password must be at least 4 characters long".into());
         }
         let hash = hash_password(password)?;
         let mut store = self.store.lock().unwrap();
         let k = key(name);
         let session = match store.accounts.get_mut(&k) {
-            Some(acc) if !acc.hash.is_empty() => return Err("Ce pseudo est déjà pris".into()),
+            Some(acc) if !acc.hash.is_empty() => return Err("This username is already taken".into()),
             Some(acc) => {
                 acc.hash = hash;
                 self.open_session(acc)
@@ -236,18 +236,18 @@ impl Accounts {
         let hash = {
             let store = self.store.lock().unwrap();
             match store.accounts.get(&k) {
-                None => return Err("Pseudo ou mot de passe incorrect".into()),
+                None => return Err("Wrong username or password".into()),
                 Some(acc) if acc.hash.is_empty() => {
-                    return Err("Ce compte n'a pas encore de mot de passe : utilisez « Créer un compte » avec ce pseudo pour le récupérer".into())
+                    return Err("This account has no password yet: use “Create account” with this username to claim it".into())
                 }
                 Some(acc) => acc.hash.clone(),
             }
         };
         if !verify_password(password, &hash) {
-            return Err("Pseudo ou mot de passe incorrect".into());
+            return Err("Wrong username or password".into());
         }
         let mut store = self.store.lock().unwrap();
-        let acc = store.accounts.get_mut(&k).ok_or("Compte introuvable")?;
+        let acc = store.accounts.get_mut(&k).ok_or("Account not found")?;
         let session = self.open_session(acc);
         self.save(&store);
         Ok(session)
@@ -305,9 +305,9 @@ impl Accounts {
 
     pub fn refill(&self, name: &str) -> Result<u64, &'static str> {
         let mut store = self.store.lock().unwrap();
-        let acc = store.accounts.get_mut(&key(name)).ok_or("Compte introuvable")?;
+        let acc = store.accounts.get_mut(&key(name)).ok_or("Account not found")?;
         if acc.balance >= REFILL_THRESHOLD {
-            return Err("La recharge n'est possible que sous 2 000 jetons");
+            return Err("You can only refill below 2,000 chips");
         }
         acc.balance = STARTING_BALANCE;
         let v = acc.balance;
@@ -329,21 +329,21 @@ impl Accounts {
 
     pub fn admin_gift(&self, admin: &str, target_id: u32, amount: i64, reason: Option<String>) -> Result<GiftResult, String> {
         if amount == 0 {
-            return Err("Le montant ne peut pas être nul".into());
+            return Err("Amount cannot be zero".into());
         }
         if amount.unsigned_abs() > MAX_GIFT {
-            return Err(format!("Montant maximum par opération : {}", MAX_GIFT));
+            return Err(format!("Maximum amount per operation: {}", MAX_GIFT));
         }
         if !self.admins.contains(admin) {
-            return Err("Réservé aux administrateurs".into());
+            return Err("Admins only".into());
         }
         let mut store = self.store.lock().unwrap();
-        let admin_name = store.accounts.get(&key(admin)).ok_or("Compte introuvable")?.name.clone();
+        let admin_name = store.accounts.get(&key(admin)).ok_or("Account not found")?.name.clone();
         let acc = store
             .accounts
             .values_mut()
             .find(|a| a.id == target_id)
-            .ok_or_else(|| format!("Aucun joueur avec le numéro {}", target_id))?;
+            .ok_or_else(|| format!("No player with number {}", target_id))?;
         let before = acc.balance;
         acc.balance = if amount > 0 {
             acc.balance.saturating_add(amount as u64)

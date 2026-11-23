@@ -25,26 +25,26 @@ async fn authenticate(hub: &Arc<Hub>, msg: ClientMsg) -> Result<Session, (String
         ClientMsg::Register { name, password } => {
             let name = name.trim().to_string();
             if !valid_name(&name) {
-                return Err(("Pseudo invalide (2 à 16 caractères, lettres et chiffres)".into(), false));
+                return Err(("Invalid username (2 to 16 characters, letters and digits)".into(), false));
             }
             let h = hub.clone();
             tokio::task::spawn_blocking(move || h.wallets.register(&name, &password))
                 .await
-                .unwrap_or_else(|_| Err("Erreur interne".into()))
+                .unwrap_or_else(|_| Err("Internal error".into()))
                 .map_err(|e| (e, false))
         }
         ClientMsg::Login { name, password } => {
             let h = hub.clone();
             tokio::task::spawn_blocking(move || h.wallets.login(&name, &password))
                 .await
-                .unwrap_or_else(|_| Err("Erreur interne".into()))
+                .unwrap_or_else(|_| Err("Internal error".into()))
                 .map_err(|e| (e, false))
         }
         ClientMsg::Resume { token } => hub
             .wallets
             .resume(&token)
-            .ok_or_else(|| ("Session expirée, reconnectez-vous".to_string(), true)),
-        _ => Err(("Connectez-vous d'abord".into(), false)),
+            .ok_or_else(|| ("Session expired, please sign in again".to_string(), true)),
+        _ => Err(("Please sign in first".into(), false)),
     }
 }
 
@@ -53,7 +53,7 @@ fn fmt_num(n: u64) -> String {
     let mut out = String::new();
     for (i, c) in digits.chars().enumerate() {
         if i > 0 && (digits.len() - i) % 3 == 0 {
-            out.push('\u{202f}');
+            out.push(',');
         }
         out.push(c);
     }
@@ -112,7 +112,7 @@ async fn handle(socket: WebSocket, hub: Arc<Hub>) {
             _ => continue,
         };
         let Ok(cmsg) = serde_json::from_str::<ClientMsg>(&text) else {
-            err("Message invalide");
+            err("Invalid message");
             continue;
         };
 
@@ -129,7 +129,7 @@ async fn handle(socket: WebSocket, hub: Arc<Hub>) {
                         .insert(key(&session.name), (tx.clone(), kill.clone()));
                     if let Some((old_out, old_kill)) = previous {
                         let _ = old_out.send(ServerMsg::Notice {
-                            msg: "Votre compte vient de se connecter depuis un autre appareil".into(),
+                            msg: "Your account just signed in from another device".into(),
                         });
                         let _ = old_out.send(ServerMsg::LoggedOut);
                         old_kill.notify_one();
@@ -153,7 +153,7 @@ async fn handle(socket: WebSocket, hub: Arc<Hub>) {
         }
 
         let Some(me) = name.clone() else {
-            err("Connectez-vous d'abord");
+            err("Please sign in first");
             continue;
         };
 
@@ -181,7 +181,7 @@ async fn handle(socket: WebSocket, hub: Arc<Hub>) {
             },
             ClientMsg::AdminList => {
                 if !hub.wallets.is_admin(&me) {
-                    err("Réservé aux administrateurs");
+                    err("Admins only");
                     continue;
                 }
                 let _ = tx.send(admin_players(&hub));
@@ -189,19 +189,19 @@ async fn handle(socket: WebSocket, hub: Arc<Hub>) {
             ClientMsg::AdminGive { player_id, amount, reason } => {
                 match hub.wallets.admin_gift(&me, player_id, amount, reason.clone()) {
                     Ok(r) => {
-                        let verb = if r.applied >= 0 { "reçoit" } else { "perd" };
+                        let verb = if r.applied >= 0 { "receives" } else { "loses" };
                         let _ = tx.send(ServerMsg::Notice {
-                            msg: format!("{} (n°{}) {} {} jetons", r.target, player_id, verb, fmt_num(r.applied.unsigned_abs())),
+                            msg: format!("{} (#{}) {} {} chips", r.target, player_id, verb, fmt_num(r.applied.unsigned_abs())),
                         });
                         let detail = reason
                             .map(|x| x.trim().to_string())
                             .filter(|x| !x.is_empty())
-                            .map(|x| format!(" : {}", x))
+                            .map(|x| format!(": {}", x))
                             .unwrap_or_default();
                         let note = if r.applied >= 0 {
-                            format!("{} vous a offert {} jetons{}", me, fmt_num(r.applied.unsigned_abs()), detail)
+                            format!("{} gave you {} chips{}", me, fmt_num(r.applied.unsigned_abs()), detail)
                         } else {
-                            format!("{} vous a retiré {} jetons{}", me, fmt_num(r.applied.unsigned_abs()), detail)
+                            format!("{} took {} chips from you{}", me, fmt_num(r.applied.unsigned_abs()), detail)
                         };
                         hub.notify(&r.target, vec![ServerMsg::Balance { balance: r.balance }, ServerMsg::Notice { msg: note }]);
                         let _ = tx.send(admin_players(&hub));
@@ -219,7 +219,7 @@ async fn handle(socket: WebSocket, hub: Arc<Hub>) {
                         let _ = tx.send(ServerMsg::Joined { table: id.clone(), game });
                         table = Some(id);
                     }
-                    None => err("Table introuvable"),
+                    None => err("Table not found"),
                 }
             }
             ClientMsg::Leave => {
@@ -231,7 +231,7 @@ async fn handle(socket: WebSocket, hub: Arc<Hub>) {
             }
             other => {
                 let Some(t) = table.clone() else {
-                    err("Rejoignez une table d'abord");
+                    err("Join a table first");
                     continue;
                 };
                 let cmd = match other {
