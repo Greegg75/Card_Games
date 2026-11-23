@@ -13,7 +13,7 @@ const PIPS = {
   10: [[32, 26], [68, 26], [50, 41], [32, 56], [68, 56], [32, 84], [68, 84], [50, 99], [32, 114], [68, 114]]
 }
 
-const RANK_LABEL = { A: 'A', K: 'R', Q: 'D', J: 'V', T: '10' }
+const RANK_LABEL = { A: 'A', K: 'K', Q: 'Q', J: 'J', T: 'T' }
 const RANK_NUM = { A: 1, K: 13, Q: 12, J: 11, T: 10 }
 const FACE_INK = { s: '#1b2340', c: '#1b3b2c', h: '#8c1c2a', d: '#9a3a12' }
 
