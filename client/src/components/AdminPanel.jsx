@@ -6,10 +6,10 @@ const QUICK = [1000, 5000, 10000, 50000]
 
 function ago(at) {
   const s = Math.max(0, Math.floor(Date.now() / 1000 - at))
-  if (s < 60) return 'à l’instant'
-  if (s < 3600) return `il y a ${Math.floor(s / 60)} min`
-  if (s < 86400) return `il y a ${Math.floor(s / 3600)} h`
-  return new Date(at * 1000).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+  if (s < 60) return 'just now'
+  if (s < 3600) return `${Math.floor(s / 60)} min ago`
+  if (s < 86400) return `${Math.floor(s / 3600)} h ago`
+  return new Date(at * 1000).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
 }
 
 export default function AdminPanel({ onClose }) {
@@ -43,28 +43,28 @@ export default function AdminPanel({ onClose }) {
     <div className="admin">
       <div className="rankings-head">
         <h2>Administration</h2>
-        <button className="btn btn-ghost btn-xs" onClick={onClose}>Fermer</button>
+        <button className="btn btn-ghost btn-xs" onClick={onClose}>Close</button>
       </div>
-      <p className="rankings-sub">Donnez ou retirez des jetons à un joueur grâce à son numéro, visible en haut de son lobby. La liste des administrateurs se modifie dans le fichier <code>server/admins.txt</code>.</p>
+      <p className="rankings-sub">Give or remove chips using a player’s number, shown at the top of their lobby. The list of admins is edited in <code>server/admins.txt</code>.</p>
 
       <form className="admin-give" onSubmit={e => { e.preventDefault(); submit(1) }}>
         <div className="admin-fields">
           <label>
-            <span>Numéro du joueur</span>
+            <span>Player number</span>
             <input inputMode="numeric" maxLength={6} value={number} onChange={e => setNumber(e.target.value.replace(/\D/g, ''))} placeholder="123456" />
           </label>
           <label>
-            <span>Montant</span>
+            <span>Amount</span>
             <input inputMode="numeric" value={amount} onChange={e => setAmount(e.target.value.replace(/\D/g, ''))} placeholder="5000" />
           </label>
         </div>
         <div className="admin-target">
-          {number.length === 0 && <span className="muted">Saisissez un numéro ou choisissez un joueur dans la liste.</span>}
-          {number.length > 0 && !target && <span className="field-error">Aucun joueur avec ce numéro.</span>}
+          {number.length === 0 && <span className="muted">Enter a number or pick a player from the list.</span>}
+          {number.length > 0 && !target && <span className="field-error">No player with this number.</span>}
           {target && (
             <span>
-              <b>{target.name}</b> a actuellement <b>{fmt(target.balance)}</b> jetons
-              {validAmount && <> et en aura <b>{fmt(target.balance + value)}</b> après le don</>}.
+              <b>{target.name}</b> currently has <b>{fmt(target.balance)}</b> chips
+              {validAmount && <> and will have <b>{fmt(target.balance + value)}</b> after the gift</>}.
             </span>
           )}
         </div>
@@ -74,20 +74,20 @@ export default function AdminPanel({ onClose }) {
           ))}
         </div>
         <label className="admin-reason">
-          <span>Motif (facultatif)</span>
-          <input value={reason} maxLength={120} onChange={e => setReason(e.target.value)} placeholder="Gagnant du tournoi du vendredi" />
+          <span>Reason (optional)</span>
+          <input value={reason} maxLength={120} onChange={e => setReason(e.target.value)} placeholder="Winner of Friday’s tournament" />
         </label>
         <div className="modal-actions">
-          <button type="button" className="btn btn-ghost btn-danger" disabled={!canSubmit} onClick={() => submit(-1)}>Retirer</button>
-          <button type="submit" className="btn btn-brass" disabled={!canSubmit}>Donner {validAmount ? fmt(value) : ''} jetons</button>
+          <button type="button" className="btn btn-ghost btn-danger" disabled={!canSubmit} onClick={() => submit(-1)}>Remove</button>
+          <button type="submit" className="btn btn-brass" disabled={!canSubmit}>Give {validAmount ? fmt(value) : ''} chips</button>
         </div>
       </form>
 
       <div className="admin-section-head">
-        <h3>Joueurs</h3>
-        <input className="admin-search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Rechercher un pseudo ou un numéro" />
+        <h3>Players</h3>
+        <input className="admin-search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search a username or number" />
       </div>
-      {!data && <p className="muted">Chargement…</p>}
+      {!data && <p className="muted">Loading…</p>}
       <ul className="admin-players">
         {filtered.map(p => (
           <li key={p.id} className={String(p.id) === number ? 'is-selected' : ''}>
@@ -96,29 +96,29 @@ export default function AdminPanel({ onClose }) {
               <b>{p.name}</b>
               <small>
                 <span className={`dot ${p.online ? 'dot-on' : ''}`} />
-                {p.online ? 'En ligne' : 'Hors ligne'}
+                {p.online ? 'Online' : 'Offline'}
                 {p.admin && <em className="admin-badge">Admin</em>}
-                {!p.claimed && <em className="admin-badge admin-badge-muted">Sans mot de passe</em>}
+                {!p.claimed && <em className="admin-badge admin-badge-muted">No password</em>}
               </small>
             </span>
-            <span className="admin-id">n° {p.id}</span>
+            <span className="admin-id">#{p.id}</span>
             <span className="admin-balance">{fmt(p.balance)}</span>
             <span className="admin-actions">
-              <button className="btn btn-ghost btn-xs" onClick={() => setNumber(String(p.id))}>Choisir</button>
+              <button className="btn btn-ghost btn-xs" onClick={() => setNumber(String(p.id))}>Select</button>
             </span>
           </li>
         ))}
       </ul>
 
-      <h3 className="admin-log-title">Dernières opérations</h3>
-      {data && data.log.length === 0 && <p className="muted">Aucune opération pour l’instant.</p>}
+      <h3 className="admin-log-title">Recent activity</h3>
+      {data && data.log.length === 0 && <p className="muted">No activity yet.</p>}
       <ul className="admin-log">
         {data?.log.map((l, i) => (
           <li key={i}>
             <span className={l.amount >= 0 ? 'plus' : 'minus'}>{l.amount >= 0 ? '+' : '−'}{fmt(Math.abs(l.amount))}</span>
             <span>
-              <b>{l.target}</b> (n° {l.target_id}) par {l.admin}
-              {l.reason && <i> : {l.reason}</i>}
+              <b>{l.target}</b> (#{l.target_id}) by {l.admin}
+              {l.reason && <i>: {l.reason}</i>}
             </span>
             <small>{ago(l.at)}</small>
           </li>

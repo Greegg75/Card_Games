@@ -20,17 +20,17 @@ function TableRow({ t }) {
         <h3>{t.name}</h3>
         <p>
           {t.game === 'poker'
-            ? `Blindes ${fmt(t.small_blind)}/${fmt(t.big_blind)}, cave ${range(t.min_buy, t.max_buy)}`
-            : `Mise ${range(t.min_bet, t.max_bet)}`}
+            ? `Blinds ${fmt(t.small_blind)}/${fmt(t.big_blind)}, buy-in ${range(t.min_buy, t.max_buy)}`
+            : `Bets ${range(t.min_bet, t.max_bet)}`}
         </p>
       </div>
       <div className="lobby-row-meta">
-        <span className="lobby-players"><b>{t.players}</b>/{t.seats} joueurs</span>
-        {t.watchers > t.players && <span className="lobby-watchers">{t.watchers - t.players} spectateur{t.watchers - t.players > 1 ? 's' : ''}</span>}
+        <span className="lobby-players"><b>{t.players}</b>/{t.seats} players</span>
+        {t.watchers > t.players && <span className="lobby-watchers">{t.watchers - t.players} watching</span>}
         <span className="lobby-theme">{theme(t.theme).name}</span>
       </div>
       <button className="btn btn-brass" onClick={() => send({ t: 'join', table: t.id })}>
-        {full ? 'Regarder' : 'Rejoindre'}
+        {full ? 'Watch' : 'Join'}
       </button>
     </li>
   )
@@ -47,9 +47,9 @@ export default function Lobby() {
   const copyId = async () => {
     try {
       await navigator.clipboard.writeText(String(playerId))
-      toast('Numéro copié', 'info')
+      toast('Number copied', 'info')
     } catch {
-      toast(`Votre numéro : ${playerId}`, 'info')
+      toast(`Your number: ${playerId}`, 'info')
     }
   }
   useEffect(() => {
@@ -67,25 +67,25 @@ export default function Lobby() {
           <span>Aurum Club</span>
         </div>
         <div className="lobby-top-right">
-          {admin && <button className="btn btn-ghost" onClick={() => setAdminOpen(true)}>Administration</button>}
-          <button className="player-id" onClick={copyId} title="Copier mon numéro de joueur">
+          {admin && <button className="btn btn-ghost" onClick={() => setAdminOpen(true)}>Admin</button>}
+          <button className="player-id" onClick={copyId} title="Copy my player number">
             <span className="lobby-me">{me}</span>
-            <span className="player-id-num">n° {playerId}</span>
+            <span className="player-id-num">#{playerId}</span>
           </button>
           <Balance />
-          <button className="btn btn-ghost btn-sm" onClick={logout}>Déconnexion</button>
+          <button className="btn btn-ghost btn-sm" onClick={logout}>Sign out</button>
         </div>
       </header>
 
       <section className="hero">
         <div className="hero-text">
-          <h1>Les tables sont ouvertes.</h1>
-          <p>Texas Hold'em et blackjack en multijoueur, avec des jetons virtuels. Invitez vos amis sur le même réseau et prenez place.</p>
+          <h1>The tables are open.</h1>
+          <p>Multiplayer Texas Hold'em and blackjack with virtual chips. Invite your friends and take a seat.</p>
           <div className="hero-actions">
-            <button className="btn btn-brass btn-lg" onClick={() => { setTab('poker'); document.getElementById('tables')?.scrollIntoView({ behavior: 'smooth' }) }}>Voir les tables</button>
-            <button className="btn btn-ghost btn-lg" onClick={() => setRankings(true)}>Classement des mains</button>
+            <button className="btn btn-brass btn-lg" onClick={() => { setTab('poker'); document.getElementById('tables')?.scrollIntoView({ behavior: 'smooth' }) }}>See the tables</button>
+            <button className="btn btn-ghost btn-lg" onClick={() => setRankings(true)}>Hand rankings</button>
           </div>
-          <p className="hero-online">{online > 0 ? `${online} joueur${online > 1 ? 's' : ''} assis en ce moment` : 'Aucun joueur assis pour le moment'}</p>
+          <p className="hero-online">{online > 0 ? `${online} player${online > 1 ? 's' : ''} seated right now` : 'No one is seated yet'}</p>
         </div>
         <div className="hero-art" aria-hidden="true">
           <div className="hero-felt" />
@@ -111,7 +111,7 @@ export default function Lobby() {
 
       <section className="tables" id="tables">
         <div className="tables-head">
-          <h2>Choisir une table</h2>
+          <h2>Choose a table</h2>
           <div className="segmented" role="tablist">
             <button role="tab" aria-selected={tab === 'poker'} className={tab === 'poker' ? 'on' : ''} onClick={() => setTab('poker')}>Poker</button>
             <button role="tab" aria-selected={tab === 'blackjack'} className={tab === 'blackjack' ? 'on' : ''} onClick={() => setTab('blackjack')}>Blackjack</button>
@@ -120,7 +120,7 @@ export default function Lobby() {
         <motion.ul key={tab} className="lobby-list" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           {list.map(t => <TableRow key={t.id} t={t} />)}
         </motion.ul>
-        <p className="lobby-foot">Jetons virtuels sans valeur réelle. Votre solde est conservé sur votre compte et peut être rechargé sous 2 000 jetons. Cliquez sur votre numéro de joueur pour le copier et le transmettre à un administrateur.</p>
+        <p className="lobby-foot">Virtual chips with no real value. Your balance is saved on your account and can be refilled below 2,000 chips. Click your player number to copy it and send it to an admin.</p>
       </section>
 
       <Modal open={rankings} onClose={() => setRankings(false)} className="modal-wide">

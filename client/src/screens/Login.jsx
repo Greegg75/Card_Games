@@ -20,10 +20,10 @@ export default function Login() {
     else login(name.trim(), password)
   }
   const label = status !== 'online'
-    ? 'Connexion au serveur…'
+    ? 'Connecting to server…'
     : pending
-      ? 'Un instant…'
-      : isRegister ? 'Créer mon compte' : 'Se connecter'
+      ? 'One moment…'
+      : isRegister ? 'Create my account' : 'Sign in'
   return (
     <div className="screen login">
       <div className="login-cards" aria-hidden="true">
@@ -33,27 +33,27 @@ export default function Login() {
       <motion.form className="login-panel" onSubmit={submit} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
         <img src="/favicon.svg" alt="" width="56" height="56" />
         <h1>Aurum Club</h1>
-        <p>Poker et blackjack entre amis, avec des jetons virtuels.</p>
+        <p>Poker and blackjack with friends, played with virtual chips.</p>
         <div className="segmented login-tabs" role="tablist">
-          <button type="button" role="tab" aria-selected={!isRegister} className={!isRegister ? 'on' : ''} onClick={() => setMode('login')}>Se connecter</button>
-          <button type="button" role="tab" aria-selected={isRegister} className={isRegister ? 'on' : ''} onClick={() => setMode('register')}>Créer un compte</button>
+          <button type="button" role="tab" aria-selected={!isRegister} className={!isRegister ? 'on' : ''} onClick={() => setMode('login')}>Sign in</button>
+          <button type="button" role="tab" aria-selected={isRegister} className={isRegister ? 'on' : ''} onClick={() => setMode('register')}>Create account</button>
         </div>
-        <label htmlFor="name">Pseudo</label>
-        <input id="name" autoFocus value={name} maxLength={16} onChange={e => setName(e.target.value)} placeholder="Par exemple : Grégoire" autoComplete="username" />
-        <label htmlFor="password">Mot de passe</label>
-        <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="4 caractères minimum" autoComplete={isRegister ? 'new-password' : 'current-password'} />
+        <label htmlFor="name">Username</label>
+        <input id="name" autoFocus value={name} maxLength={16} onChange={e => setName(e.target.value)} placeholder="For example: Grégoire" autoComplete="username" />
+        <label htmlFor="password">Password</label>
+        <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 4 characters" autoComplete={isRegister ? 'new-password' : 'current-password'} />
         {isRegister && (
           <>
-            <label htmlFor="confirm">Confirmer le mot de passe</label>
+            <label htmlFor="confirm">Confirm password</label>
             <input id="confirm" type="password" value={confirm} onChange={e => setConfirm(e.target.value)} autoComplete="new-password" aria-invalid={mismatch} className={mismatch ? 'input-error' : ''} />
-            {mismatch && <span className="field-error">Les deux mots de passe ne correspondent pas.</span>}
+            {mismatch && <span className="field-error">The two passwords don’t match.</span>}
           </>
         )}
         <button className="btn btn-brass btn-lg" type="submit" disabled={!ready}>{label}</button>
         <small>
           {isRegister
-            ? 'Votre compte reçoit 20 000 jetons et un numéro de joueur à donner aux administrateurs.'
-            : 'Vous restez connecté sur cet appareil jusqu’à la déconnexion.'}
+            ? 'Your account gets 20,000 chips and a player number to share with the admins.'
+            : 'You stay signed in on this device until you sign out.'}
         </small>
       </motion.form>
     </div>
