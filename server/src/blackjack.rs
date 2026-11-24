@@ -247,7 +247,7 @@ impl BlackjackTable {
             }
             TableCmd::Sit { cid, seat, .. } => self.sit(cid, seat).map_err(|e| (cid, e)),
             TableCmd::Bet { cid, amount } => self.bet(cid, amount).map_err(|e| (cid, e)),
-            TableCmd::Act { cid, kind, .. } => self.act(cid, &kind).map_err(|e| (cid, e)),
+            TableCmd::Act { cid, kind, amount } => self.act(cid, &kind, amount).map_err(|e| (cid, e)),
             TableCmd::Chat { cid, text } => {
                 let text: String = text.trim().chars().take(200).collect();
                 if let (false, Some(w)) = (text.is_empty(), self.watchers.get(&cid)) {
@@ -337,6 +337,35 @@ impl BlackjackTable {
         Ok(())
     }
 
+    fn set_bet(&mut self, i: usize, target: u64) -> Result<(), String> {
+        if !matches!(self.phase, Phase::Waiting | Phase::Betting) {
+            return Err("Betting is closed".into());
+        }
+        if target < self.cfg.min_bet {
+            return Err(format!("Minimum bet: {}", self.cfg.min_bet));
+        }
+        if target > self.cfg.max_bet {
+            return Err(format!("Maximum bet: {}", self.cfg.max_bet));
+        }
+        let s = self.seats[i].as_ref().unwrap();
+        let (cid, name, current) = (s.cid, s.name.clone(), s.bet);
+        if target > current {
+            if !self.hub.wallets.take(&name, target - current) {
+                return Err("Insufficient balance".into());
+            }
+        } else if target < current {
+            self.hub.wallets.give(&name, current - target);
+        }
+        self.seats[i].as_mut().unwrap().bet = target;
+        self.send_balance(cid, &name);
+        if self.phase == Phase::Waiting {
+            self.phase = Phase::Betting;
+            self.set_timer(BET_MS);
+        }
+        self.check_quick_start();
+        Ok(())
+    }
+
     fn check_quick_start(&mut self) {
         let seated: Vec<&Seat> = self.seats.iter().flatten().collect();
         if !seated.is_empty() && seated.iter().all(|s| s.bet >= self.cfg.min_bet) {
@@ -348,7 +377,7 @@ impl BlackjackTable {
         }
     }
 
-    fn act(&mut self, cid: u64, kind: &str) -> Result<(), String> {
+    fn act(&mut self, cid: u64, kind: &str, amount: Option<u64>) -> Result<(), String> {
         let i = self.seat_of(cid).ok_or("You are not seated")?;
         match kind {
             "clear" => {
@@ -366,6 +395,7 @@ impl BlackjackTable {
                 }
                 Ok(())
             }
+            "set" => self.set_bet(i, amount.ok_or("Missing amount")?),
             "rebet" => {
                 let last = self.seats[i].as_ref().unwrap().last_bet;
                 if last == 0 {

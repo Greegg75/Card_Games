@@ -99,30 +99,87 @@ function BjSeat({ v, i, progress }) {
   )
 }
 
+const SLIDER_STEPS = 1000
+
+function niceUnit(min) {
+  if (min >= 10) return Math.max(1, Math.round(min / 10))
+  return 1
+}
+
 function BetBar({ v, remaining }) {
   const balance = useStore(s => s.balance)
   const me = v.seats[v.you]
-  const chips = DENOMS.map(d => d.v).filter(x => x <= v.table.max_bet && x * 20 >= v.table.min_bet).reverse().slice(0, 6)
+  const min = v.table.min_bet
+  const max = Math.min(v.table.max_bet, balance + me.bet)
+  const unit = niceUnit(min)
+  const canBet = max >= min
+  const snap = x => Math.max(min, Math.min(max, x >= max ? max : Math.round(x / unit) * unit))
+  const [amt, setAmt] = useState(() => snap(me.bet || me.last_bet || min))
+  const [typed, setTyped] = useState(null)
+  useEffect(() => { if (me.bet > 0) setAmt(snap(me.bet)) }, [me.bet])
+  useEffect(() => { setAmt(a => snap(a)) }, [max])
+  const chips = DENOMS.map(d => d.v).filter(x => x <= v.table.max_bet && x * 20 >= min).reverse().slice(0, 6)
   const bet = amount => send({ t: 'bet', amount })
+  const place = () => send({ t: 'act', kind: 'set', amount: snap(typed ?? amt) })
+  const pos = max > min ? Math.round(((amt - min) / (max - min)) * SLIDER_STEPS) : SLIDER_STEPS
+  const fromPos = p => snap(p >= SLIDER_STEPS ? max : min + ((max - min) * p) / SLIDER_STEPS)
+  const commitTyped = () => {
+    if (typed == null) return
+    setAmt(snap(Number(typed) || min))
+    setTyped(null)
+  }
   return (
     <motion.div className="bj-bar" initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 30, opacity: 0 }}>
-      <div className="bj-bar-info">
-        <strong>{me.bet > 0 ? `Your bet: ${fmt(me.bet)}` : 'Place your bet'}</strong>
-        <span>
-          {v.phase === 'betting' && remaining != null ? `Dealing in ${Math.ceil(remaining / 1000)}s` : `Bets ${range(v.table.min_bet, v.table.max_bet)}`}
-        </span>
+      <div className="bj-bar-main">
+        <div className="bj-bar-info">
+          <strong>{me.bet > 0 ? `Your bet: ${fmt(me.bet)}` : 'Place your bet'}</strong>
+          <span>
+            {v.phase === 'betting' && remaining != null ? `Dealing in ${Math.ceil(remaining / 1000)}s` : `Bets ${range(min, v.table.max_bet)}`}
+          </span>
+        </div>
+        <div className="bj-chips">
+          {chips.map(c => (
+            <button key={c} className="chip-btn" disabled={balance < c || me.bet + c > v.table.max_bet} onClick={() => bet(c)} aria-label={`Add ${c}`}>
+              <Chip value={c} size={58} />
+            </button>
+          ))}
+        </div>
+        <div className="bj-bar-actions">
+          <button className="btn btn-ghost btn-sm" disabled={!me.bet} onClick={() => send({ t: 'act', kind: 'clear' })}>Clear</button>
+          <button className="btn btn-ghost btn-sm" disabled={!me.last_bet || me.bet > 0} onClick={() => send({ t: 'act', kind: 'rebet' })}>Rebet {me.last_bet ? fmt(me.last_bet) : ''}</button>
+        </div>
       </div>
-      <div className="bj-chips">
-        {chips.map(c => (
-          <button key={c} className="chip-btn" disabled={balance < c || me.bet + c > v.table.max_bet} onClick={() => bet(c)} aria-label={`Bet ${c}`}>
-            <Chip value={c} size={58} />
-          </button>
-        ))}
-      </div>
-      <div className="bj-bar-actions">
-        <button className="btn btn-ghost btn-sm" disabled={!me.bet} onClick={() => send({ t: 'act', kind: 'clear' })}>Clear</button>
-        <button className="btn btn-ghost btn-sm" disabled={!me.last_bet || me.bet > 0} onClick={() => send({ t: 'act', kind: 'rebet' })}>Rebet {me.last_bet ? fmt(me.last_bet) : ''}</button>
-      </div>
+      {canBet ? (
+        <div className="bj-slider">
+          <div className="presets">
+            <button onClick={() => setAmt(min)}>Min</button>
+            <button onClick={() => setAmt(snap(min + (max - min) / 4))}>¼</button>
+            <button onClick={() => setAmt(snap(min + (max - min) / 2))}>½</button>
+            <button onClick={() => setAmt(max)}>Max</button>
+          </div>
+          <div className="slider-row">
+            <span className="bj-slider-end">{fmt(min)}</span>
+            <input type="range" min={0} max={SLIDER_STEPS} step={1} value={pos} onChange={e => { setTyped(null); setAmt(fromPos(Number(e.target.value))) }} aria-label="Bet amount" />
+            <span className="bj-slider-end">{fmt(max)}</span>
+            <input
+              type="number"
+              className="amount-input"
+              min={min}
+              max={max}
+              value={typed ?? amt}
+              onChange={e => setTyped(e.target.value)}
+              onBlur={commitTyped}
+              onKeyDown={e => { if (e.key === 'Enter') { commitTyped(); place() } }}
+              aria-label="Exact bet"
+            />
+            <button className="btn btn-brass" disabled={snap(typed ?? amt) === me.bet} onClick={() => { commitTyped(); place() }}>
+              {me.bet > 0 ? 'Change bet to' : 'Bet'} {fmt(snap(typed ?? amt))}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="bj-slider bj-slider-empty">You need at least {fmt(min)} chips to bet at this table.</div>
+      )}
     </motion.div>
   )
 }
