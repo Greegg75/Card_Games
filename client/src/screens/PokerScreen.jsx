@@ -109,9 +109,10 @@ function ActionBar({ v }) {
   useEffect(() => { setAmt(v.min_raise_to) }, [v.min_raise_to, v.to_act, v.phase])
   const clamp = a => Math.max(v.min_raise_to, Math.min(v.max_raise_to, Math.round(a / step) * step || a))
   const potRaise = f => clamp(me.bet + v.to_call + (potTotal + v.to_call) * f)
-  const isAllIn = amt >= v.max_raise_to
+  const target = clamp(amt)
+  const isAllIn = target >= v.max_raise_to
   const act = (kind, amount) => send({ t: 'act', kind, amount })
-  const raise = () => isAllIn ? act('allin') : act('raise', amt)
+  const raise = () => { setAmt(target); isAllIn ? act('allin') : act('raise', target) }
   useEffect(() => {
     const k = e => {
       if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return
@@ -152,7 +153,7 @@ function ActionBar({ v }) {
         )}
         {canRaise && (
           <button className="act act-raise" onClick={raise}>
-            <span>{isAllIn ? 'All-in' : v.current_bet === 0 ? 'Bet' : 'Raise to'}</span><b>{fmt(Math.min(amt, v.max_raise_to))}</b><kbd>R</kbd>
+            <span>{isAllIn ? 'All-in' : v.current_bet === 0 ? 'Bet' : 'Raise to'}</span><b>{fmt(target)}</b><kbd>R</kbd>
           </button>
         )}
       </div>
