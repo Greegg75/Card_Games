@@ -4,5 +4,6 @@ import App from './App.jsx'
 import './styles.css'
 import './accounts.css'
 import './bet.css'
+import './home.css'
 
 createRoot(document.getElementById('root')).render(<App />)

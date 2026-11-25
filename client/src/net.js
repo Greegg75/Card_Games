@@ -12,6 +12,7 @@ let state = {
   lobby: [],
   table: null,
   game: null,
+  section: null,
   poker: null,
   bj: null,
   receivedAt: 0,
@@ -48,7 +49,7 @@ function url() {
   return `${proto}://${location.host}/ws`
 }
 
-const signedOut = { me: null, playerId: null, admin: false, table: null, game: null, poker: null, bj: null, chat: [], adminData: null }
+const signedOut = { me: null, playerId: null, admin: false, table: null, game: null, section: null, poker: null, bj: null, chat: [], adminData: null }
 
 function connect() {
   ws = new WebSocket(url())
@@ -105,7 +106,7 @@ function connect() {
         break
       case 'joined':
         wantedTable = m.table
-        set({ table: m.table, game: m.game, poker: null, bj: null, chat: [] })
+        set({ table: m.table, game: m.game, section: m.game, poker: null, bj: null, chat: [] })
         break
       case 'left':
         wantedTable = null
@@ -143,6 +144,11 @@ export function login(name, password) {
 export function register(name, password) {
   set({ authPending: true })
   raw({ t: 'register', name, password })
+}
+
+export function chooseSection(section) {
+  set({ section })
+  window.scrollTo(0, 0)
 }
 
 export function logout() {

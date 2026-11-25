@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { logout, send, toast, useStore } from '../net.js'
+import { chooseSection, logout, send, toast, useStore } from '../net.js'
 import { fmt, range, theme } from '../format.js'
 import Card from '../components/Card.jsx'
 import { ChipStack } from '../components/Chips.jsx'
@@ -10,6 +10,12 @@ import AdminPanel from '../components/AdminPanel.jsx'
 import { Balance, Modal } from '../components/Common.jsx'
 
 const HERO_HAND = ['As', 'Kh', 'Qd', 'Jc', 'Ts']
+
+function chooseSectionKeepScroll(section) {
+  const y = window.scrollY
+  chooseSection(section)
+  window.scrollTo(0, y)
+}
 
 function TableRow({ t }) {
   const full = t.players >= t.seats
@@ -41,7 +47,8 @@ export default function Lobby() {
   const playerId = useStore(s => s.playerId)
   const admin = useStore(s => s.admin)
   const tables = useStore(s => s.lobby)
-  const [tab, setTab] = useState('poker')
+  const tab = useStore(s => s.section) || 'poker'
+  const setTab = chooseSectionKeepScroll
   const [rankings, setRankings] = useState(false)
   const [adminOpen, setAdminOpen] = useState(false)
   const copyId = async () => {
@@ -58,7 +65,7 @@ export default function Lobby() {
     return () => clearInterval(iv)
   }, [])
   const list = tables.filter(t => t.game === tab)
-  const online = tables.reduce((a, t) => a + t.players, 0)
+  const online = list.reduce((a, t) => a + t.players, 0)
   return (
     <div className="screen lobby">
       <header className="lobby-top">
@@ -67,6 +74,7 @@ export default function Lobby() {
           <span>Aurum Club</span>
         </div>
         <div className="lobby-top-right">
+          <button className="btn btn-ghost lobby-back" onClick={() => chooseSection(null)}>All games</button>
           {admin && <button className="btn btn-ghost" onClick={() => setAdminOpen(true)}>Admin</button>}
           <button className="player-id" onClick={copyId} title="Copy my player number">
             <span className="lobby-me">{me}</span>
@@ -79,11 +87,13 @@ export default function Lobby() {
 
       <section className="hero">
         <div className="hero-text">
-          <h1>The tables are open.</h1>
-          <p>Multiplayer Texas Hold'em and blackjack with virtual chips. Invite your friends and take a seat.</p>
+          <h1>{tab === 'poker' ? 'The poker tables are open.' : 'The blackjack tables are open.'}</h1>
+          <p>{tab === 'poker'
+            ? "Multiplayer No-Limit Texas Hold'em with virtual chips. Invite your friends and take a seat."
+            : 'Play against the dealer, on your own or with friends, with virtual chips. Pick a table and place your bet.'}</p>
           <div className="hero-actions">
-            <button className="btn btn-brass btn-lg" onClick={() => { setTab('poker'); document.getElementById('tables')?.scrollIntoView({ behavior: 'smooth' }) }}>See the tables</button>
-            <button className="btn btn-ghost btn-lg" onClick={() => setRankings(true)}>Hand rankings</button>
+            <button className="btn btn-brass btn-lg" onClick={() => document.getElementById('tables')?.scrollIntoView({ behavior: 'smooth' })}>See the tables</button>
+            {tab === 'poker' && <button className="btn btn-ghost btn-lg" onClick={() => setRankings(true)}>Hand rankings</button>}
           </div>
           <p className="hero-online">{online > 0 ? `${online} player${online > 1 ? 's' : ''} seated right now` : 'No one is seated yet'}</p>
         </div>

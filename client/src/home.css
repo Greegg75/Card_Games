@@ -1,0 +1,83 @@
+.home { display: flex; flex-direction: column; min-height: 100%; }
+.home-intro { padding: 28px 0 30px; }
+.home-intro h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(34px, 4.4vw, 54px);
+  line-height: 1.08;
+  letter-spacing: 0.5px;
+}
+.home-intro p { margin: 10px 0 0; color: var(--muted); font-size: 16px; max-width: 60ch; }
+
+.home-games { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+
+.home-game {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  background: var(--panel-solid);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45);
+  transition: border-color 0.2s, box-shadow 0.25s, transform 0.25s;
+}
+.home-game:hover { border-color: var(--brass); transform: translateY(-4px); box-shadow: 0 30px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(240, 217, 154, 0.15); }
+.home-game:focus-visible { outline: 2px solid var(--brass-hi); outline-offset: 4px; }
+
+.home-game-art {
+  position: relative;
+  height: 250px;
+  border-bottom: 1px solid var(--line);
+  overflow: hidden;
+}
+.home-game-poker .home-game-art {
+  background:
+    radial-gradient(ellipse 70% 80% at 50% 40%, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 65%),
+    radial-gradient(ellipse 120% 100% at 50% 30%, #24865b 0%, #0f5236 55%, #08301f 100%);
+}
+.home-game-blackjack .home-game-art {
+  background:
+    radial-gradient(ellipse 70% 80% at 50% 40%, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 65%),
+    radial-gradient(ellipse 120% 100% at 50% 30%, #9b2c3c 0%, #5e1421 55%, #320810 100%);
+}
+.home-game-art::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 60%;
+  width: 150%;
+  height: 210%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  border: 2px solid rgba(240, 217, 154, 0.22);
+  pointer-events: none;
+}
+.home-game-cards { position: absolute; left: calc(50% - 52px); top: 46px; width: 104px; height: 146px; }
+.home-game-card { box-shadow: 0 14px 28px rgba(0, 0, 0, 0.45); }
+.home-game-chips { position: absolute; right: 9%; bottom: 34px; }
+.home-game-poker .home-game-chips { right: auto; left: 9%; }
+
+.home-game-body { display: flex; flex-direction: column; gap: 6px; padding: 24px 28px 28px; }
+.home-game-kind { font-size: 13px; font-weight: 700; color: var(--brass-hi); }
+.home-game h2 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 38px; line-height: 1.1; color: var(--ivory); }
+.home-game p { margin: 4px 0 0; color: var(--muted); font-size: 15px; max-width: 46ch; }
+.home-game-meta { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 14px; color: var(--ivory); }
+.home-game-count { margin-left: auto; color: var(--muted); }
+.home-game-cta { margin-top: 18px; align-self: flex-start; pointer-events: none; }
+
+.lobby-back { display: inline-flex; align-items: center; gap: 6px; }
+
+@media (max-width: 860px) {
+  .home-games { grid-template-columns: 1fr; }
+  .home-game-art { height: 210px; }
+  .home-game-cards { top: 30px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-game, .home-game:hover { transition: none; transform: none; }
+}
